@@ -5,6 +5,7 @@ import Foundation
 final class ReviewStateStore {
     static let seenKey = "seen_photos"
     static let trashedKey = "trashed_photos"
+    static let freedBytesKey = "freed_bytes"
 
     private let defaults: UserDefaults
     private(set) var seenIDs: Set<String>
@@ -24,6 +25,18 @@ final class ReviewStateStore {
     static func resetAll(in defaults: UserDefaults = .standard) {
         defaults.removeObject(forKey: seenKey)
         defaults.removeObject(forKey: trashedKey)
+        defaults.removeObject(forKey: freedBytesKey)
+    }
+
+    // 휴지통을 비우며 지금까지 정리한 사진 용량 (바이트)
+    static func freedBytes(in defaults: UserDefaults = .standard) -> Int64 {
+        (defaults.object(forKey: freedBytesKey) as? NSNumber)?.int64Value ?? 0
+    }
+
+    func addFreedBytes(_ bytes: Int64) {
+        guard bytes > 0 else { return }
+        let total = Self.freedBytes(in: defaults) + bytes
+        defaults.set(NSNumber(value: total), forKey: Self.freedBytesKey)
     }
 
     static func seenCount(in defaults: UserDefaults = .standard) -> Int {

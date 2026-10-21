@@ -65,6 +65,7 @@ struct InfoSheet: View {
                     guideRow("hand.point.right", "오른쪽으로 밀기", "좋아요 (사진 앱 즐겨찾기에 추가)")
                     guideRow("hand.point.left", "왼쪽으로 밀기", "휴지통으로 이동 (바로 지워지지 않아요)")
                     guideRow("hand.tap", "탭 / 가운데 버튼", "보관하고 다음 사진으로")
+                    guideRow("hand.point.up.left", "길게 누르기", "사진 전체를 화면 가득 보기 (손을 떼면 돌아와요)")
                     guideRow("arrow.uturn.backward", "실행 취소", "휴지통에 넣은 직후 토스트에서 되돌리기")
                 }
 

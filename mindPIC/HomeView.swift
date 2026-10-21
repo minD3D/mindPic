@@ -1,8 +1,11 @@
+import Photos
 import SwiftUI
 
 struct HomeView: View {
     @State private var trashCount = 0
     @State private var seenCount = 0
+    @State private var totalPhotos: Int?   // 사진 접근 권한이 있을 때만 값이 있다
+    @State private var freedBytes: Int64 = 0
     @State private var showSettings = false
     @State private var showInfo = false
     @Environment(\.scenePhase) private var scenePhase
@@ -47,10 +50,17 @@ struct HomeView: View {
                     Spacer()
 
                     HStack(spacing: 12) {
-                        statTile(title: "본 사진", count: seenCount, systemImage: "eye")
+                        statTile(title: "본 사진", count: seenCount, total: totalPhotos, systemImage: "eye")
                         statTile(title: "휴지통", count: trashCount, systemImage: "trash")
                     }
-                    .padding(.bottom, 16)
+                    .padding(.bottom, freedBytes > 0 ? 10 : 16)
+
+                    if freedBytes > 0 {
+                        Label("지금까지 \(PhotoSize.formatted(freedBytes)) 확보했어요", systemImage: "internaldrive")
+                            .font(AppFont.caption)
+                            .foregroundStyle(AppTheme.textSecondary)
+                            .padding(.bottom, 14)
+                    }
 
                     VStack(spacing: 10) {
                         NavigationLink {
@@ -96,7 +106,7 @@ struct HomeView: View {
         }
     }
 
-    private func statTile(title: LocalizedStringKey, count: Int, systemImage: String) -> some View {
+    private func statTile(title: LocalizedStringKey, count: Int, total: Int? = nil, systemImage: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: systemImage)
                 .font(.system(size: 15, weight: .semibold))
@@ -108,9 +118,15 @@ struct HomeView: View {
                 Text(title)
                     .font(AppFont.caption)
                     .foregroundStyle(AppTheme.textSecondary)
-                Text(verbatim: "\(count)")
+                // 전체 수는 작고 흐리게 붙여, 숫자가 커져도 카드에 들어가게 한다.
+                (Text(count, format: .number)
                     .font(.system(.title3, design: .rounded).weight(.semibold))
                     .foregroundStyle(AppTheme.textPrimary)
+                 + Text(verbatim: total.map { " / \($0.formatted())" } ?? "")
+                    .font(.system(.subheadline, design: .rounded).weight(.medium))
+                    .foregroundStyle(AppTheme.textSecondary))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .contentTransition(.numericText())
             }
             Spacer(minLength: 0)
@@ -128,5 +144,24 @@ struct HomeView: View {
     private func refreshCounts() {
         trashCount = ReviewStateStore.trashCount()
         seenCount = ReviewStateStore.seenCount()
+        freedBytes = ReviewStateStore.freedBytes()
+
+        // 전체 사진 수와, 본 사진 중 아직 사진첩에 남아 있는 수를 센다 (지운 사진까지 세면 전체보다 커질 수 있음).
+        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        guard status == .authorized || status == .limited else {
+            totalPhotos = nil
+            return
+        }
+        let seenIDs = Array(ReviewStateStore().seenIDs)
+        Task {
+            let (seen, total) = await Task.detached(priority: .utility) {
+                let total = PHAsset.fetchAssets(with: .image, options: nil).count
+                let seen = seenIDs.isEmpty ? 0
+                    : PHAsset.fetchAssets(withLocalIdentifiers: seenIDs, options: nil).count
+                return (seen, total)
+            }.value
+            seenCount = seen
+            totalPhotos = total
+        }
     }
 }

@@ -35,6 +35,16 @@ struct PhotoReviewView: View {
     @State private var likeFeedback = 0
     @State private var deleteFeedback = 0
 
+    // 사진을 길게 누르는 동안 전체 화면으로 보기.
+    // GestureState는 손을 떼거나 제스처가 취소되면 자동으로 false로 돌아가 화면이 남아 있지 않는다.
+    @GestureState private var isPressingToPeek = false
+    // VoiceOver에서는 길게 누르기가 어려워 동작(action)으로 열고 닫는다.
+    @State private var isAccessibilityPeek = false
+    private var isPeeking: Bool { isPressingToPeek || isAccessibilityPeek }
+    // 이번 터치에서 전체 화면을 열었는지. 손을 떼는 순간 isPressingToPeek가 먼저 풀려도
+    // 같은 터치의 스와이프가 사진을 넘기지 않도록 잠깐 더 기억한다.
+    @State private var didPeekThisTouch = false
+
     private let swipeThreshold: CGFloat = 120
 
     private var isPastSwipeThreshold: Bool { abs(dragOffset.width) > swipeThreshold }
@@ -147,6 +157,16 @@ struct PhotoReviewView: View {
                 if showDeleteOverlay {
                     overlaySystemIcon(systemName: "trash.fill", color: AppTheme.danger)
                 }
+
+                // 누르고 있는 손가락의 제스처는 카드가 계속 받으므로 이 화면은 터치를 받지 않는다.
+                if isPeeking, let current = vm.currentPhoto {
+                    FullScreenPhotoView(asset: current.asset)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .allowsHitTesting(isAccessibilityPeek)
+                        .accessibilityAction(named: Text("닫기")) { isAccessibilityPeek = false }
+                        .zIndex(10)
+                }
             }
             .overlay(alignment: .bottom) {
                 if showUndoToast && vm.canUndoDelete {
@@ -160,6 +180,16 @@ struct PhotoReviewView: View {
             !wasPast && isPast
         }
         .sensoryFeedback(.success, trigger: likeFeedback)
+        .sensoryFeedback(.impact(weight: .light), trigger: isPeeking) { _, peeking in peeking }
+        .onChange(of: isPressingToPeek) { _, pressing in
+            if pressing {
+                didPeekThisTouch = true
+            } else {
+                // 같은 터치의 스와이프 onEnded가 확인할 시간을 준 뒤 해제한다.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { didPeekThisTouch = false }
+            }
+        }
+        .statusBarHidden(isPeeking)
         .sensoryFeedback(.impact(weight: .medium), trigger: deleteFeedback)
         .onChange(of: vm.shouldAskForNewRandom) {
             if vm.shouldAskForNewRandom {
@@ -187,7 +217,7 @@ struct PhotoReviewView: View {
         .sheet(isPresented: $showShareSheet) {
             if let img = shareImage { ActivityView(activityItems: [img]) }
         }
-        .toolbar(.visible, for: .navigationBar)
+        .toolbar(isPeeking ? .hidden : .visible, for: .navigationBar)
         .onDisappear { vm.stopCaching() }
     }
 
@@ -245,18 +275,42 @@ struct PhotoReviewView: View {
             .onTapGesture {
                 if isTop { vm.keep() }
             }
+            // 길게 누르면 전체 화면, 손을 떼면 돌아온다. 끌기 시작하면(12pt 이상) 스와이프로 넘어간다.
+            .simultaneousGesture(peekGesture, including: isTop ? .all : .none)
+            .accessibilityAction(named: Text("전체 화면으로 보기")) {
+                guard isTop else { return }
+                isAccessibilityPeek.toggle()
+            }
             .allowsHitTesting(isTop)
             .accessibilityHidden(!isTop)
             .accessibilityLabel("사진")
             .accessibilityHint("오른쪽으로 밀면 좋아요, 왼쪽으로 밀면 휴지통, 탭하면 보관 후 다음 사진")
     }
 
+    // 길게 누른 뒤(.second) 손을 떼기 전까지 isPressingToPeek가 true
+    private var peekGesture: some Gesture {
+        LongPressGesture(minimumDuration: 0.35, maximumDistance: 12)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .updating($isPressingToPeek) { value, state, transaction in
+                if case .second(true, _) = value, dragOffset == .zero {
+                    transaction.animation = .easeOut(duration: 0.15)
+                    state = true
+                }
+            }
+    }
+
     private var cardDragGesture: some Gesture {
         DragGesture()
             .onChanged { value in
+                // 전체 화면으로 보는 중에는 손가락이 움직여도 뒤의 카드를 넘기지 않는다.
+                guard !isPeeking && !didPeekThisTouch else { return }
                 dragOffset = value.translation
             }
             .onEnded { value in
+                if isPeeking || didPeekThisTouch {
+                    dragOffset = .zero
+                    return
+                }
                 if value.translation.width > swipeThreshold {
                     commitSwipe(toRight: true, action: performLike)
                 } else if value.translation.width < -swipeThreshold {
@@ -480,6 +534,15 @@ struct PhotoReviewView: View {
     var filterSheet: some View {
         NavigationStack {
             Form {
+                // 자주 쓰는 옵션이라 시트를 열자마자(절반 높이) 보이도록 맨 위에 둔다.
+                Section(header: Text("리뷰 상태"),
+                        footer: Text("한 번 넘긴 사진은 다시 나오지 않아요. 기록은 홈 > 설정에서 초기화할 수 있어요.")) {
+                    Toggle("안 본 사진만 보기", isOn: $vm.onlyUnseen)
+                        .onChange(of: vm.onlyUnseen) {
+                            vm.reloadByFilter()
+                        }
+                }
+
                 Section(header: Text("랜덤")) {
                     filterRow("랜덤 100장", isSelected: vm.filterType == .random100) {
                         vm.selectRandom100()
@@ -541,14 +604,6 @@ struct PhotoReviewView: View {
                         footer: Text("iCloud에서 받아야 하는 사진은 건너뛰어 기다림 없이 볼 수 있어요.")) {
                     Toggle("기기에 있는 사진만 보기", isOn: $vm.onlyLocal)
                         .onChange(of: vm.onlyLocal) {
-                            vm.reloadByFilter()
-                        }
-                }
-
-                Section(header: Text("리뷰 상태"),
-                        footer: Text("한 번 넘긴 사진은 다시 나오지 않아요. 기록은 홈 > 설정에서 초기화할 수 있어요.")) {
-                    Toggle("안 본 사진만 보기", isOn: $vm.onlyUnseen)
-                        .onChange(of: vm.onlyUnseen) {
                             vm.reloadByFilter()
                         }
                 }

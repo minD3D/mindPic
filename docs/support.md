@@ -22,6 +22,9 @@ mind PIC을 이용해 주셔서 감사합니다. 궁금한 점은 아래 자주 
 
 스와이프 대신 사진 아래 **휴지통 · 보관 · 좋아요** 버튼을 눌러도 됩니다.
 
+**Q. 사진이 잘려 보여요. 전체를 보고 싶어요.**
+카드는 화면에 맞게 사진을 잘라 보여줘요. 사진을 **길게 누르고 있으면** 전체 화면으로 사진 전체를 볼 수 있고, 손을 떼면 돌아와요.
+
 **Q. 사진 왼쪽 위에 하트가 있어요.**
 이미 '사진' 앱 즐겨찾기에 있거나 mind PIC에서 좋아요한 사진이라는 표시입니다.
 
@@ -30,6 +33,12 @@ mind PIC을 이용해 주셔서 감사합니다. 궁금한 점은 아래 자주 
 
 **Q. 휴지통을 비우면 사진이 바로 사라지나요?**
 아니요. '사진' 앱의 **최근 삭제된 항목**으로 이동하며, 30일 동안은 '사진' 앱에서 복구할 수 있습니다. 30일이 지나면 영구 삭제됩니다.
+
+**Q. 휴지통을 비웠는데 iPhone 저장 공간이 그대로예요.**
+지운 사진은 '사진' 앱의 **최근 삭제된 항목**에 30일 동안 남아 있어요. 그곳을 비우거나 30일이 지나면 공간이 실제로 비워집니다. 앱에 표시되는 "확보한 공간"은 정리한 사진의 용량이에요.
+
+**Q. 홈의 '본 사진 6 / 120'은 무슨 뜻인가요?**
+사진첩 전체 사진 중 지금까지 넘겨 본 사진 수예요. 사진 접근을 허용하기 전에는 본 사진 수만 보여요.
 
 **Q. '안 본 사진만 보기'에 사진이 하나도 안 나와요.**
 이미 모두 확인한 경우입니다. 홈 오른쪽 위 **⚙️ 설정** > **본 사진 기록 초기화**를 누르면 처음부터 다시 볼 수 있어요. 사진은 삭제되지 않습니다.
@@ -83,6 +92,9 @@ Open an issue on [GitHub Issues](https://github.com/minD3D/mindPic/issues/new) a
 **How do I use it?**
 Swipe right to like (adds to Favorites in Photos), swipe left to move to the in-app trash, and tap to keep and see the next photo. You can also use the **Trash · Keep · Like** buttons below the photo.
 
+**The photo looks cropped. How do I see all of it?**
+Cards are cropped to fit the screen. **Press and hold** the photo to see the whole image full screen; release to go back.
+
 **What's the heart in the top-left corner of a photo?**
 It marks photos that are already in Favorites or that you liked in mind PIC.
 
@@ -91,6 +103,12 @@ Tap **Undo** at the bottom of the screen right after trashing. Otherwise, go to 
 
 **Does emptying the trash delete photos immediately?**
 No. Photos move to **Recently Deleted** in the Photos app, where you can recover them for 30 days.
+
+**I emptied the trash but my iPhone storage didn't change.**
+Deleted photos stay in **Recently Deleted** in the Photos app for 30 days. The space is released once you empty it there or after 30 days. "Freed" in the app shows the size of the photos you cleaned up.
+
+**What does "Reviewed 6 / 120" on Home mean?**
+It's how many photos you've reviewed out of your whole library. Before you allow photo access, only the reviewed count is shown.
 
 **"Unseen Only" shows no photos.**
 You've reviewed them all. Tap **⚙️ Settings** in the top-right of Home > **Reset Review History** to start over. No photos are deleted.

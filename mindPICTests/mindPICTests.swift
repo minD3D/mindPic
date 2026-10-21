@@ -50,6 +50,33 @@ struct ReviewStateStoreTests {
     }
 }
 
+struct FreedBytesTests {
+
+    private func makeDefaults() -> UserDefaults {
+        let suite = "mindPICTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        return defaults
+    }
+
+    @Test func accumulatesAcrossInstances() {
+        let defaults = makeDefaults()
+        ReviewStateStore(defaults: defaults).addFreedBytes(1_500)
+        ReviewStateStore(defaults: defaults).addFreedBytes(2_500)
+        #expect(ReviewStateStore.freedBytes(in: defaults) == 4_000)
+    }
+
+    @Test func ignoresZeroAndResetsWithResetAll() {
+        let defaults = makeDefaults()
+        let store = ReviewStateStore(defaults: defaults)
+        store.addFreedBytes(0)
+        #expect(ReviewStateStore.freedBytes(in: defaults) == 0)
+        store.addFreedBytes(10)
+        ReviewStateStore.resetAll(in: defaults)
+        #expect(ReviewStateStore.freedBytes(in: defaults) == 0)
+    }
+}
+
 struct RandomIndicesTests {
 
     @Test func returnsAtMostLimitUniqueIndices() {

@@ -10,6 +10,27 @@ let sharedImageManager = PHCachingImageManager()
 // 이미지 로딩 시간 측정용 로그. Mac의 '콘솔' 앱에서 기기를 고르고 subsystem으로 걸러 볼 수 있다.
 let imageLoadLog = Logger(subsystem: "mind3d.mindPIC", category: "ImageLoading")
 
+// MARK: - 사진 용량
+enum PhotoSize {
+    /// 사진 한 장의 파일 용량 (편집본, 라이브 포토 영상 포함). 알 수 없으면 0.
+    /// fileSize는 문서에 없는 속성이라, iOS가 바뀌어 없어져도 앱이 멈추지 않게 먼저 확인한다.
+    nonisolated static func bytes(of asset: PHAsset) -> Int64 {
+        PHAssetResource.assetResources(for: asset).reduce(into: Int64(0)) { sum, resource in
+            guard resource.responds(to: Selector(("fileSize"))),
+                  let size = resource.value(forKey: "fileSize") as? NSNumber else { return }
+            sum += size.int64Value
+        }
+    }
+
+    nonisolated static func bytes(of items: [PhotoItem]) -> Int64 {
+        items.reduce(0) { $0 + bytes(of: $1.asset) }
+    }
+
+    static func formatted(_ bytes: Int64) -> String {
+        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+}
+
 // MARK: - 기기에 있는 사진 기록
 // 기기에 있다고 확인된 사진은 앱이 켜져 있는 동안 기억해, 필터를 바꿔도 다시 확인하지 않는다.
 // (iCloud에 있다는 결과는 기억하지 않는다. 미리 받고 나면 기기에 생기기 때문)
