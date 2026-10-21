@@ -1,38 +1,64 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "NSPhotoLibraryUsageDescription": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "mind PIC accesses your photo library to help you review and organize your photos."
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "사진을 정리하기 위해 사진 라이브러리에 접근합니다."
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "mind PIC"
           }
         }
       }
     },
-    "NSPhotoLibraryAddUsageDescription": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "mind PIC modifies your photo library to mark favorites and delete photos you choose."
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "mindPIC"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryAddUsageDescription" : {
+      "comment" : "Privacy - Photo Library Additions Usage Description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mind PIC modifies your photo library to mark favorites and delete photos you choose."
           }
         },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "사진을 삭제하거나 즐겨찾기 설정을 하기 위해 사진 라이브러리를 수정합니다."
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진을 삭제하거나 즐겨찾기 설정을 하기 위해 사진 라이브러리를 수정합니다."
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryUsageDescription" : {
+      "comment" : "Privacy - Photo Library Usage Description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mind PIC accesses your photo library to help you review and organize your photos."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진을 정리하기 위해 사진 라이브러리에 접근합니다."
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

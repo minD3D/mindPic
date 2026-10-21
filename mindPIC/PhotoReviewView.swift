@@ -55,9 +55,11 @@ struct PhotoReviewView: View {
                         Spacer()
 
                         Button { loadImageForShare() } label: {
-                            AppChip(text: Text("공유"), systemImage: "square.and.arrow.up")
+                            AppIconButtonLabel(systemImage: "square.and.arrow.up")
                         }
+                        .accessibilityLabel("공유")
                         .disabled(vm.currentPhoto == nil)
+                        .opacity(vm.currentPhoto == nil ? 0.5 : 1)
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
@@ -78,33 +80,32 @@ struct PhotoReviewView: View {
                             .frame(maxHeight: .infinity)
 
                     } else if let current = vm.currentPhoto {
-                        Text(verbatim: "\(vm.currentIndex+1) / \(vm.photos.count)")
-                            .font(AppFont.buttonSmall)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(AppTheme.card)
-                            .foregroundColor(AppTheme.textSecondary)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(AppTheme.border, lineWidth: 1)
-                            )
-                            .cornerRadius(10)
-                            .padding(.top, 4)
-                            .accessibilityLabel("\(vm.photos.count)장 중 \(vm.currentIndex+1)번째")
+                        progressHeader
+                            .padding(.horizontal, 24)
+                            .padding(.top, 2)
 
-                        ZStack(alignment: .topLeading) {
+                        ZStack(alignment: .bottomLeading) {
                             AssetImageView(asset: current.asset)
                                 .id(current.id)
                                 .frame(width: geo.size.width * 0.9,
-                                       height: geo.size.height * 0.65)
-                                .background(AppTheme.cardStrong)
-                                .clipShape(RoundedRectangle(cornerRadius: 24))
+                                       height: geo.size.height * 0.63)
+                                .background(AppTheme.surfaceMuted)
+                                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                                 .overlay { swipeHint }
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 24)
-                                        .stroke(AppTheme.border, lineWidth: 1)
-                                )
-                                .shadow(color: AppTheme.shadow, radius: 12, x: 0, y: 6)
+                                .overlay(alignment: .bottomLeading) {
+                                    if let date = vm.currentDateString {
+                                        Label(date, systemImage: "calendar")
+                                            .font(AppFont.caption)
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 6)
+                                            .background(.black.opacity(0.35), in: Capsule())
+                                            .foregroundStyle(.white)
+                                            .padding(14)
+                                            .opacity(dragOffset == .zero ? 1 : 0)
+                                            .allowsHitTesting(false)
+                                    }
+                                }
+                                .shadow(color: AppTheme.shadow, radius: 20, x: 0, y: 10)
                                 .offset(dragOffset)
                                 .rotationEffect(.degrees(Double(dragOffset.width / 15)))
                                 .scaleEffect(dragOffset == .zero ? 1.0 : 0.98)
@@ -131,52 +132,41 @@ struct PhotoReviewView: View {
                                 }
                                 .accessibilityLabel("사진")
                                 .accessibilityHint("오른쪽으로 밀면 좋아요, 왼쪽으로 밀면 휴지통, 탭하면 보관 후 다음 사진")
-
-                            if let date = vm.currentDateString {
-                                Text(date)
-                                    .font(AppFont.caption)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 6)
-                                    .background(AppTheme.cardStrong)
-                                    .foregroundColor(AppTheme.textPrimary)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(AppTheme.border, lineWidth: 1)
-                                    )
-                                    .cornerRadius(10)
-                                    .padding(.top, 16)
-                                    .padding(.leading, 32)
-                                    .opacity(dragOffset == .zero ? 1 : 0)
-                            }
                         }
-                        .frame(maxWidth: .infinity, maxHeight: geo.size.height * 0.7)
-                        .padding(.top, 8)
+                        .frame(maxWidth: .infinity, maxHeight: geo.size.height * 0.68)
+                        .padding(.top, 6)
 
-                        Spacer()
+                        Spacer(minLength: 8)
 
-                        HStack(spacing: 20) {
+                        HStack {
                             navButton("이전", systemImage: "chevron.backward") { vm.previous() }
                                 .disabled(vm.currentIndex == 0)
-                                .opacity(vm.currentIndex == 0 ? 0.5 : 1)
+                                .opacity(vm.currentIndex == 0 ? 0.4 : 1)
 
-                            navButton("5장 건너뛰기", systemImage: "forward.fill") { vm.next5() }
+                            Spacer()
+
+                            navButton("5장 건너뛰기", systemImage: "forward") { vm.next5() }
                         }
-                        .padding(.bottom, 6)
+                        .padding(.horizontal, 28)
+                        .padding(.bottom, 4)
 
-                        HStack(spacing: 32) {
-                            actionButton(image: "icon_trash_3d", title: "휴지통", size: 64) {
+                        HStack(alignment: .top, spacing: 36) {
+                            actionButton(systemImage: "trash", title: "휴지통", size: 62,
+                                         foreground: AppTheme.danger, background: AppTheme.surface) {
                                 performDelete()
                             }
                             .accessibilityLabel("휴지통으로 이동")
                             .accessibilityIdentifier("review.delete")
 
-                            actionButton(image: "icon_next_3d", title: "보관", size: 72) {
+                            actionButton(systemImage: "arrow.right", title: "보관", size: 76,
+                                         foreground: .white, background: AppTheme.accentDark) {
                                 vm.keep()
                             }
                             .accessibilityLabel("보관하고 다음 사진")
                             .accessibilityIdentifier("review.keep")
 
-                            actionButton(image: "icon_heart_3d", title: "좋아요", size: 64) {
+                            actionButton(systemImage: "heart.fill", title: "좋아요", size: 62,
+                                         foreground: AppTheme.like, background: AppTheme.surface) {
                                 performLike()
                             }
                             .accessibilityLabel("좋아요")
@@ -192,7 +182,7 @@ struct PhotoReviewView: View {
                 .allowsHitTesting(!isCommittingSwipe)
 
                 if showLikeOverlay {
-                    overlaySystemIcon(systemName: "heart.fill", color: AppTheme.accentDark)
+                    overlaySystemIcon(systemName: "heart.fill", color: AppTheme.like)
                 }
                 if showDeleteOverlay {
                     overlaySystemIcon(systemName: "trash.fill", color: AppTheme.danger)
@@ -251,11 +241,11 @@ struct PhotoReviewView: View {
     private var swipeHint: some View {
         let progress = min(abs(dragOffset.width) / swipeThreshold, 1)
         let isLike = dragOffset.width > 0
-        let color = isLike ? AppTheme.accentDark : AppTheme.danger
+        let color = isLike ? AppTheme.like : AppTheme.danger
 
         return ZStack(alignment: isLike ? .topTrailing : .topLeading) {
-            RoundedRectangle(cornerRadius: 24)
-                .fill(color.opacity(0.18 * progress))
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(color.opacity(0.22 * progress))
 
             Label(isLike ? LocalizedStringKey("좋아요") : LocalizedStringKey("휴지통"),
                   systemImage: isLike ? "heart.fill" : "trash.fill")
@@ -270,11 +260,31 @@ struct PhotoReviewView: View {
         .allowsHitTesting(false)
     }
 
+    // 진행 상황: 얇은 진행 막대 + "n / N"
+    private var progressHeader: some View {
+        let total = max(vm.photos.count, 1)
+        let progress = Double(vm.currentIndex + 1) / Double(total)
+
+        return HStack(spacing: 12) {
+            ProgressView(value: progress)
+                .progressViewStyle(.linear)
+                .tint(AppTheme.accent)
+                .animation(.easeOut(duration: 0.2), value: progress)
+            Text(verbatim: "\(vm.currentIndex+1) / \(vm.photos.count)")
+                .font(AppFont.caption.monospacedDigit())
+                .foregroundStyle(AppTheme.textSecondary)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(vm.photos.count)장 중 \(vm.currentIndex+1)번째")
+    }
+
     private var emptyState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             Image(systemName: "photo.on.rectangle.angled")
-                .font(.system(size: 40))
-                .foregroundColor(AppTheme.textSecondary)
+                .font(.system(size: 30, weight: .medium))
+                .foregroundStyle(AppTheme.accent)
+                .frame(width: 76, height: 76)
+                .background(AppTheme.accentSoft, in: Circle())
             Text(vm.onlyUnseen ? LocalizedStringKey("이 필터에 아직 안 본 사진이 없어요")
                                : LocalizedStringKey("이 필터에 해당하는 사진이 없어요"))
                 .font(AppFont.subtitle)
@@ -303,49 +313,42 @@ struct PhotoReviewView: View {
             }
             .font(AppFont.buttonSmall.weight(.bold))
             .accessibilityIdentifier("review.undo")
-            .foregroundColor(AppTheme.accent)
+            .foregroundStyle(AppTheme.accent)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 12)
-        .background(Capsule().fill(AppTheme.textPrimary.opacity(0.92)))
-        .shadow(color: AppTheme.shadow, radius: 8, x: 0, y: 4)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 13)
+        .background(Capsule().fill(AppTheme.accentDark))
+        .shadow(color: AppTheme.shadow, radius: 12, x: 0, y: 6)
     }
 
     private func navButton(_ title: LocalizedStringKey, systemImage: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
                 .font(AppFont.buttonSmall)
-                .padding(.horizontal, 16)
+                .foregroundStyle(AppTheme.textSecondary)
                 .padding(.vertical, 8)
-                .background(AppTheme.cardStrong)
-                .foregroundColor(AppTheme.textPrimary)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(AppTheme.border, lineWidth: 1)
-                )
-                .cornerRadius(14)
+                .contentShape(Rectangle())
         }
     }
 
-    private func actionButton(image: String, title: LocalizedStringKey, size: CGFloat,
+    private func actionButton(systemImage: String, title: LocalizedStringKey, size: CGFloat,
+                              foreground: Color, background: Color,
                               action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                ZStack {
-                    Circle()
-                        .fill(AppTheme.cardStrong)
-                        .shadow(color: AppTheme.shadow, radius: 8, x: 0, y: 4)
-                        .frame(width: size, height: size)
-                    Image(image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: size * 0.57, height: size * 0.57)
-                }
+            VStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.system(size: size * 0.36, weight: .semibold))
+                    .foregroundStyle(foreground)
+                    .frame(width: size, height: size)
+                    .background(background, in: Circle())
+                    .overlay(Circle().stroke(AppTheme.border, lineWidth: background == AppTheme.surface ? 1 : 0))
+                    .shadow(color: AppTheme.shadow, radius: 12, x: 0, y: 6)
                 Text(title)
                     .font(AppFont.caption)
-                    .foregroundColor(AppTheme.textSecondary)
+                    .foregroundStyle(AppTheme.textSecondary)
             }
         }
+        .buttonStyle(PressScaleButtonStyle())
     }
 
     private func overlaySystemIcon(systemName: String, color: Color) -> some View {
@@ -504,6 +507,7 @@ struct PhotoReviewView: View {
                 }
 
             }
+            .appFormStyle()
             .navigationTitle("필터 선택")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

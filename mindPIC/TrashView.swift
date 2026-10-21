@@ -10,7 +10,7 @@ struct TrashView: View {
     @State private var showRestoreAlert = false
     @State private var selectedPhotoID: String?
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
     private var isEmptyDisabled: Bool { vm.trashedPhotoIDs.isEmpty || !hasAuth }
 
     var body: some View {
@@ -31,13 +31,16 @@ struct TrashView: View {
                         .tint(AppTheme.accentDark)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if vm.photos.isEmpty {
-                    VStack(spacing: 12) {
+                    VStack(spacing: 14) {
                         Image(systemName: "trash")
-                            .font(.system(size: 40))
+                            .font(.system(size: 30, weight: .medium))
+                            .foregroundStyle(AppTheme.accent)
+                            .frame(width: 76, height: 76)
+                            .background(AppTheme.accentSoft, in: Circle())
                         Text("휴지통이 비어 있습니다")
                             .font(AppFont.subtitle)
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
-                    .foregroundColor(AppTheme.textSecondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
@@ -46,7 +49,7 @@ struct TrashView: View {
                             .foregroundColor(AppTheme.textSecondary)
                             .padding(.top, 12)
 
-                        LazyVGrid(columns: columns, spacing: 8) {
+                        LazyVGrid(columns: columns, spacing: 6) {
                             ForEach(vm.photos) { item in
                                 TrashThumbnailView(asset: item.asset)
                                     .contentShape(Rectangle())
@@ -65,7 +68,7 @@ struct TrashView: View {
                                     .accessibilityHint("탭하면 복원할 수 있습니다")
                             }
                         }
-                        .padding(.horizontal, 12)
+                        .padding(.horizontal, 16)
                         .padding(.top, 4)
                         .padding(.bottom, 24)
                     }
@@ -78,6 +81,7 @@ struct TrashView: View {
             } label: {
                 AppButtonLabel(
                     text: Text("휴지통 비우기"),
+                    systemImage: "trash",
                     foreground: isEmptyDisabled ? AppTheme.textSecondary : .white,
                     background: isEmptyDisabled ? AppTheme.cardStrong : AppTheme.danger,
                     border: isEmptyDisabled ? AppTheme.border : nil,
@@ -144,7 +148,7 @@ private struct TrashThumbnailView: View {
                         .scaledToFill()
                         .frame(width: geo.size.width, height: geo.size.height)
                 } else {
-                    AppTheme.card
+                    AppTheme.surfaceMuted
                     ProgressView()
                         .tint(AppTheme.accentDark)
                 }
@@ -154,12 +158,7 @@ private struct TrashThumbnailView: View {
             .onDisappear { cancelRequest() }
         }
         .aspectRatio(1, contentMode: .fit)
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(AppTheme.border, lineWidth: 1)
-        )
-        .shadow(color: AppTheme.shadow, radius: 6, x: 0, y: 3)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func loadThumbnail(containerSize: CGSize) {

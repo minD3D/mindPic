@@ -68,6 +68,7 @@ final class ScreenshotTests: XCTestCase {
         goBack()
         let trash = app.buttons["home.trash"]
         XCTAssertTrue(trash.waitForExistence(timeout: 5))
+        waitUntilHittable(trash) // 뒤로 가기 애니메이션 중에 누르면 무시된다
         trash.tap()
         pause(2) // 썸네일 로딩 대기
         snapshot("05-trash")
@@ -76,6 +77,7 @@ final class ScreenshotTests: XCTestCase {
         goBack()
         let info = app.buttons["home.info"]
         XCTAssertTrue(info.waitForExistence(timeout: 5))
+        waitUntilHittable(info) // 뒤로 가기 애니메이션 중에 누르면 무시된다
         info.tap()
         XCTAssertTrue(app.buttons["sheet.close"].waitForExistence(timeout: 3))
         pause(0.8)

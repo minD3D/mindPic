@@ -12,10 +12,7 @@ struct ContentView: View {
                 ZStack {
                     AppBackground()
                     VStack {
-                        Image("SplashIcon")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 180, height: 180)
+                        AppLogo(size: 220)
                     }
                 }
                 .transition(.opacity)
