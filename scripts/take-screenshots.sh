@@ -62,6 +62,7 @@ for lang in $LANGS; do
         -project "$ROOT/mindPIC.xcodeproj" \
         -scheme mindPIC \
         -destination "id=$UDID" \
+        -parallel-testing-enabled NO \
         -only-testing:mindPICUITests/ScreenshotTests \
         -quiet
 done

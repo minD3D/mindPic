@@ -108,7 +108,7 @@ struct HomeView: View {
                 Text(title)
                     .font(AppFont.caption)
                     .foregroundStyle(AppTheme.textSecondary)
-                Text("\(count)장")
+                Text(verbatim: "\(count)")
                     .font(.system(.title3, design: .rounded).weight(.semibold))
                     .foregroundStyle(AppTheme.textPrimary)
                     .contentTransition(.numericText())
