@@ -7,17 +7,19 @@ mind PIC: Swipe Photo Cleaner
 Clean up your camera roll fast
 
 ## Promotional Text (max 170, editable without review)
-Thousands of photos piling up? Swipe through them one by one. Right to favorite, left to trash — and if you slip, just tap Undo.
+Thousands of photos piling up? Swipe through them one by one. Right to like, left to trash — and if you slip, just tap Undo.
 
 ## Description (max 4,000)
 Thousands of photos in your library and no idea where to start?
 mind PIC lets you swipe through your photos one at a time and quickly decide what to keep and what to let go.
 
 ■ CLEAN UP WITH A SWIPE
-· Swipe right — Favorite (adds to Favorites in the Photos app)
+· Swipe right — Like (adds to Favorites in the Photos app)
 · Swipe left — Move to trash
 · Tap — Keep it and see the next photo
 · Deleted by mistake? Tap Undo right away
+· Prefer buttons? Trash, Keep, and Like sit right below the photo
+· See how many photos you've reviewed and trashed at a glance on the home screen
 
 ■ PICK WHAT TO REVIEW TODAY
 · Random 100 — a little at a time, no pressure
@@ -40,7 +42,7 @@ When you empty the trash, photos move to "Recently Deleted" in the Photos app, s
 Five minutes on your commute or before bed — start lightening your photo library today.
 
 ## Keywords (max 100, comma-separated, no spaces)
-tidy,storage,delete,gallery,camera roll,declutter,screenshots,burst,memories,organize,album,space
+tidy,storage,delete,gallery,cameraroll,declutter,screenshots,burst,memories,organize,album,space
 
 ## Category
 - Primary: Photo & Video
