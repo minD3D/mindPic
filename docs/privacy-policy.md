@@ -1,8 +1,8 @@
 # mind PIC 개인정보처리방침
 
-시행일: [YYYY년 MM월 DD일]
+시행일: 2026년 10월 21일
 
-[개발자 이름](이하 "개발자")은 mind PIC(이하 "앱") 이용자의 개인정보를 중요하게 생각하며, 「개인정보 보호법」 등 관련 법령을 준수합니다.
+minD3D(이하 "개발자")은 mind PIC(이하 "앱") 이용자의 개인정보를 중요하게 생각하며, 「개인정보 보호법」 등 관련 법령을 준수합니다.
 
 ## 1. 수집하는 개인정보
 
@@ -51,14 +51,14 @@
 
 개인정보와 관련한 문의는 아래로 연락해 주세요.
 
-- 개발자: [개발자 이름]
-- 이메일: [연락처 이메일]
+- 개발자: minD3D
+- 문의: [GitHub Issues](https://github.com/minD3D/mindPic/issues/new) (공개 게시판이므로 개인정보는 적지 말아 주세요)
 
 ---
 
 # mind PIC Privacy Policy (English)
 
-Effective date: [YYYY-MM-DD]
+Effective date: October 21, 2026
 
 mind PIC ("the app") **does not collect, store on any server, or share any personal data.**
 
@@ -68,4 +68,4 @@ mind PIC ("the app") **does not collect, store on any server, or share any perso
 - The app stores, on your device only, the IDs of photos you have already reviewed and of photos in the app's trash. You can clear this in the app's Settings, and it is removed when you delete the app.
 - You can change or revoke photo access anytime in iOS Settings > mind PIC > Photos.
 
-Contact: [Developer name], [Contact email]
+Contact: minD3D via [GitHub Issues](https://github.com/minD3D/mindPic/issues/new) (public — please don't include personal information)

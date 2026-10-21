@@ -67,8 +67,17 @@ mindPIC/
 - **사진**: PhotoKit (`PHAsset`, `PHCachingImageManager`)
 - **테스트**: Swift Testing (`mindPICTests`)
 
+## 출시
+
+```bash
+scripts/release.sh   # 단위 테스트 → Archive → App Store Connect 업로드
+```
+
+App Store Connect 입력값과 순서는 [출시 체크리스트](docs/release-checklist.md)에 정리되어 있습니다.
+
 ## 문서
 
+- [출시 체크리스트](docs/release-checklist.md)
 - [지원 / 자주 묻는 질문](docs/support.md)
 - [개인정보처리방침](docs/privacy-policy.md)
 
