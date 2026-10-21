@@ -34,6 +34,14 @@ open mindPic/mindPIC.xcodeproj
 2. `mindPIC` 스킴으로 실행(⌘R), 테스트(⌘U)합니다.
 3. 시뮬레이터에서는 사진 앱에 사진을 드래그해 넣어 테스트할 수 있습니다.
 
+## App Store 스크린샷
+
+```bash
+scripts/take-screenshots.sh ~/Pictures/샘플사진   # 사진 폴더는 처음 한 번만
+```
+
+시뮬레이터(기본 iPhone 17 Pro Max, 6.9인치)에 사진 접근을 미리 허용하고 상태바를 정리한 뒤, 한국어/영어로 홈·리뷰·실행 취소·필터·휴지통·사용법 화면을 촬영해 `screenshots/`에 저장합니다. (`DEVICE`, `LANGS`, `OUT_DIR` 환경 변수로 변경 가능)
+
 ## 구조
 
 ```

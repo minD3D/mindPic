@@ -20,6 +20,12 @@ final class ReviewStateStore {
         loadIDs(forKey: trashedKey, from: defaults).count
     }
 
+    // UI 테스트(스크린샷)를 항상 같은 상태에서 시작하기 위함
+    static func resetAll(in defaults: UserDefaults = .standard) {
+        defaults.removeObject(forKey: seenKey)
+        defaults.removeObject(forKey: trashedKey)
+    }
+
     static func seenCount(in defaults: UserDefaults = .standard) -> Int {
         loadIDs(forKey: seenKey, from: defaults).count
     }
