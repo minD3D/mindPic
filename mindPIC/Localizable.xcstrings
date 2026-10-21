@@ -1728,6 +1728,118 @@
           }
         }
       }
+    },
+    "비우면 약 %@ 확보" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emptying frees about %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "비우면 약 %@ 확보"
+          }
+        }
+      }
+    },
+    "방금 %@ 확보했어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You just freed %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "방금 %@ 확보했어요"
+          }
+        }
+      }
+    },
+    "지금까지 %@ 확보했어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ freed so far"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금까지 %@ 확보했어요"
+          }
+        }
+      }
+    },
+    "'최근 삭제된 항목'을 비우면 바로, 아니면 30일 뒤에 실제 공간이 비워져요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The space is released once you empty \"Recently Deleted\" in Photos, or after 30 days."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "'최근 삭제된 항목'을 비우면 바로, 아니면 30일 뒤에 실제 공간이 비워져요."
+          }
+        }
+      }
+    },
+    "전체 화면으로 보기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View Full Screen"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 화면으로 보기"
+          }
+        }
+      }
+    },
+    "길게 누르기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press and hold"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "길게 누르기"
+          }
+        }
+      }
+    },
+    "사진 전체를 화면 가득 보기 (손을 떼면 돌아와요)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See the whole photo full screen (release to go back)"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진 전체를 화면 가득 보기 (손을 떼면 돌아와요)"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

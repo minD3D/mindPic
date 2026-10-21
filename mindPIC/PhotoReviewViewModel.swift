@@ -29,6 +29,9 @@ final class PhotoReviewViewModel: ObservableObject {
     @Published private var lastDeleted: (item: PhotoItem, index: Int)?
     var canUndoDelete: Bool { lastDeleted != nil }
 
+    // 방금 휴지통을 비우며 정리한 용량 (휴지통 화면에 결과로 보여준다)
+    @Published private(set) var lastFreedBytes: Int64?
+
     // 본 사진 / 휴지통 ID 저장
     private let store: ReviewStateStore
 
@@ -439,6 +442,11 @@ final class PhotoReviewViewModel: ObservableObject {
 
         Task {
             if !assets.isEmpty {
+                // 지우고 나면 용량을 알 수 없으니 먼저 잰다.
+                let items = assets.map(PhotoItem.init(asset:))
+                let bytes = await Task.detached(priority: .userInitiated) {
+                    PhotoSize.bytes(of: items)
+                }.value
                 do {
                     try await PHPhotoLibrary.shared().performChanges {
                         PHAssetChangeRequest.deleteAssets(assets as NSArray)
@@ -447,6 +455,9 @@ final class PhotoReviewViewModel: ObservableObject {
                     // 사용자가 시스템 삭제 확인을 취소한 경우 등: 휴지통 유지
                     return
                 }
+                store.addFreedBytes(bytes)
+                lastFreedBytes = bytes
+                imageLoadLog.notice("emptied trash: \(assets.count, privacy: .public) photos")
             }
             updateTrash { $0.removeFromTrash(ids) }
             if filterType == .trash { finishLoading(with: []) }

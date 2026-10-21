@@ -173,3 +173,49 @@ private struct DownloadProgressRing: View {
         .accessibilityValue(Text(verbatim: "\(Int(progress * 100))%"))
     }
 }
+
+// MARK: - 전체 화면 보기 (길게 누르는 동안)
+// 카드는 꽉 채우려고 사진을 잘라 보여주므로, 여기서는 화면 전체에 사진 전체가 보이게 한다.
+struct FullScreenPhotoView: View {
+    let asset: PHAsset
+    @State private var image: UIImage?
+    @State private var requestID: PHImageRequestID?
+
+    var body: some View {
+        ZStack {
+            Color.black
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                ProgressView()
+                    .tint(.white)
+            }
+        }
+        .onAppear { load() }
+        .onDisappear {
+            if let requestID { sharedImageManager.cancelImageRequest(requestID) }
+        }
+        .accessibilityElement()
+        .accessibilityLabel(Text("사진"))
+    }
+
+    private func load() {
+        let screen = UIScreen.main
+        let size = CGSize(width: screen.bounds.width * screen.scale,
+                          height: screen.bounds.height * screen.scale)
+
+        // opportunistic: 기기에 있는 미리보기를 바로 보여주고, 고화질이 오면 바꾼다.
+        let opt = PHImageRequestOptions()
+        opt.isNetworkAccessAllowed = true
+        opt.deliveryMode = .opportunistic
+        opt.resizeMode = .fast
+
+        requestID = sharedImageManager.requestImage(
+            for: asset, targetSize: size, contentMode: .aspectFit, options: opt
+        ) { img, _ in
+            if let img { image = img }
+        }
+    }
+}
