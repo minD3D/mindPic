@@ -16,6 +16,10 @@ final class PhotoReviewViewModel: ObservableObject {
     // ✅ 랜덤100 다 봤을 때 팝업 띄우기 트리거
     @Published var shouldAskForNewRandom: Bool = false
 
+    // 마지막으로 휴지통에 넣은 사진 (실행 취소용)
+    @Published private var lastDeleted: (item: PhotoItem, index: Int)?
+    var canUndoDelete: Bool { lastDeleted != nil }
+
     // 본 사진 / 휴지통 ID 저장
     private let store: ReviewStateStore
 
@@ -117,6 +121,7 @@ final class PhotoReviewViewModel: ObservableObject {
         currentIndex = 0
         isLoading = false
         shouldAskForNewRandom = false
+        lastDeleted = nil
         updateCaching()
     }
 
@@ -283,6 +288,7 @@ final class PhotoReviewViewModel: ObservableObject {
         updateTrash { $0.addToTrash(current.id) }
 
         let removeIndex = currentIndex
+        lastDeleted = (current, removeIndex)
         photos.remove(at: removeIndex)
         if photos.isEmpty {
             currentIndex = 0
@@ -290,6 +296,19 @@ final class PhotoReviewViewModel: ObservableObject {
         } else if removeIndex >= photos.count {
             currentIndex = photos.count - 1
         }
+        updateCaching()
+    }
+
+    // 방금 휴지통에 넣은 사진을 원래 자리로 되돌린다.
+    func undoDelete() {
+        guard let deleted = lastDeleted else { return }
+        lastDeleted = nil
+        updateTrash { $0.removeFromTrash([deleted.item.id]) }
+
+        let insertIndex = min(deleted.index, photos.count)
+        photos.insert(deleted.item, at: insertIndex)
+        currentIndex = insertIndex
+        shouldAskForNewRandom = false
         updateCaching()
     }
 

@@ -3,6 +3,7 @@ import Photos
 
 struct TrashView: View {
     @StateObject private var vm = PhotoReviewViewModel()
+    @Environment(\.scenePhase) private var scenePhase
     @State private var hasAuth = false
     @State private var authChecked = false
     @State private var showEmptyAlert = false
@@ -23,29 +24,28 @@ struct TrashView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .onAppear { requestAccessAndLoad() }
                 } else if !hasAuth {
-                    VStack(spacing: 12) {
-                        Text("사진 접근 권한이 필요합니다.")
-                            .font(AppFont.body)
-                            .foregroundColor(AppTheme.textPrimary)
-                        Button("다시 요청") {
-                            requestAccessAndLoad()
-                        }
-                        .font(AppFont.buttonSmall)
-                        .foregroundColor(AppTheme.accentDark)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    PhotoPermissionView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if vm.isLoading {
                     ProgressView("불러오는 중…")
                         .tint(AppTheme.accentDark)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if vm.photos.isEmpty {
-                    Text("휴지통이 비어\n있습니다")
-                        .font(AppFont.subtitle)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(AppTheme.textSecondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    VStack(spacing: 12) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 40))
+                        Text("휴지통이 비어 있습니다")
+                            .font(AppFont.subtitle)
+                    }
+                    .foregroundColor(AppTheme.textSecondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
+                        Text("사진을 탭하거나 길게 눌러 복원할 수 있어요")
+                            .font(AppFont.caption)
+                            .foregroundColor(AppTheme.textSecondary)
+                            .padding(.top, 12)
+
                         LazyVGrid(columns: columns, spacing: 8) {
                             ForEach(vm.photos) { item in
                                 TrashThumbnailView(asset: item.asset)
@@ -54,10 +54,19 @@ struct TrashView: View {
                                         selectedPhotoID = item.id
                                         showRestoreAlert = true
                                     }
+                                    .contextMenu {
+                                        Button {
+                                            vm.restore(photoID: item.id)
+                                        } label: {
+                                            Label("복원", systemImage: "arrow.uturn.backward")
+                                        }
+                                    }
+                                    .accessibilityLabel("휴지통 사진")
+                                    .accessibilityHint("탭하면 복원할 수 있습니다")
                             }
                         }
                         .padding(.horizontal, 12)
-                        .padding(.top, 12)
+                        .padding(.top, 4)
                         .padding(.bottom, 24)
                     }
                 }
@@ -79,14 +88,20 @@ struct TrashView: View {
             }
             .disabled(isEmptyDisabled)
         }
-        .navigationTitle("휴지통")
+        .navigationTitle(vm.photos.isEmpty ? "휴지통" : "휴지통 (\(vm.photos.count))")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
+        .onChange(of: scenePhase) { _, phase in
+            // 설정 앱에서 권한을 바꾸고 돌아온 경우 다시 확인
+            if phase == .active && authChecked && !hasAuth {
+                requestAccessAndLoad()
+            }
+        }
         .alert("휴지통을 비울까요?", isPresented: $showEmptyAlert) {
             Button("비우기", role: .destructive) { vm.emptyTrash() }
             Button("취소", role: .cancel) {}
         } message: {
-            Text("휴지통의 사진이 영구적으로 삭제됩니다.")
+            Text("\(vm.photos.count)장이 사진 앱의 '최근 삭제된 항목'으로 이동하며, 30일 후 영구 삭제됩니다.")
         }
         .alert("사진을 복원할까요?", isPresented: $showRestoreAlert) {
             Button("복원") {

@@ -20,6 +20,16 @@ final class ReviewStateStore {
         loadIDs(forKey: trashedKey, from: defaults).count
     }
 
+    static func seenCount(in defaults: UserDefaults = .standard) -> Int {
+        loadIDs(forKey: seenKey, from: defaults).count
+    }
+
+    // "안 본 사진만 보기"를 처음부터 다시 쓰고 싶을 때
+    func resetSeen() {
+        seenIDs.removeAll()
+        save(seenIDs, forKey: Self.seenKey)
+    }
+
     func markSeen(_ id: String) {
         guard seenIDs.insert(id).inserted else { return }
         save(seenIDs, forKey: Self.seenKey)
