@@ -7,6 +7,7 @@ struct AssetImageView: View {
     let asset: PHAsset
     @State private var thumbnailImage: UIImage?
     @State private var fullImage: UIImage?
+    @State private var requestIDs: [PHImageRequestID] = []
 
     var body: some View {
         GeometryReader { geo in
@@ -24,48 +25,43 @@ struct AssetImageView: View {
                         .frame(width: geo.size.width, height: geo.size.height)
                 }
             }
-            .onAppear { loadImages(asset: asset, containerSize: geo.size) }
+            .onAppear { loadImages() }
+            .onDisappear { cancelRequests() }
         }
     }
 
-    private func loadImages(asset: PHAsset, containerSize: CGSize) {
-        let scale = UIScreen.main.scale
-
-        let thumbSize = CGSize(
-            width: min(400, containerSize.width * scale),
-            height: min(400, containerSize.height * scale)
-        )
-        let fullSize = CGSize(
-            width: containerSize.width * scale,
-            height: containerSize.height * scale
-        )
+    private func loadImages() {
+        guard fullImage == nil else { return }
 
         let thumbOptions = PHImageRequestOptions()
         thumbOptions.isNetworkAccessAllowed = false
         thumbOptions.deliveryMode = .fastFormat
         thumbOptions.resizeMode = .fast
 
-        sharedImageManager.requestImage(
+        let thumbID = sharedImageManager.requestImage(
             for: asset,
-            targetSize: thumbSize,
+            targetSize: CGSize(width: 400, height: 400),
             contentMode: .aspectFill,
             options: thumbOptions
         ) { img, _ in
-            if let img = img { self.thumbnailImage = img }
+            if let img = img, fullImage == nil { thumbnailImage = img }
         }
 
-        let fullOptions = PHImageRequestOptions()
-        fullOptions.isNetworkAccessAllowed = true
-        fullOptions.deliveryMode = .highQualityFormat
-        fullOptions.resizeMode = .fast
-
-        sharedImageManager.requestImage(
+        // ViewModel 프리히팅과 같은 스펙으로 요청해야 캐시가 적중한다.
+        let fullID = sharedImageManager.requestImage(
             for: asset,
-            targetSize: fullSize,
-            contentMode: .aspectFill,
-            options: fullOptions
+            targetSize: ReviewImageSpec.targetSize,
+            contentMode: ReviewImageSpec.contentMode,
+            options: ReviewImageSpec.makeOptions()
         ) { img, _ in
-            if let img = img { self.fullImage = img }
+            if let img = img { fullImage = img }
         }
+
+        requestIDs = [thumbID, fullID]
+    }
+
+    private func cancelRequests() {
+        requestIDs.forEach { sharedImageManager.cancelImageRequest($0) }
+        requestIDs = []
     }
 }

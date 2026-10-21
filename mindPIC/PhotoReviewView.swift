@@ -23,6 +23,9 @@ struct PhotoReviewView: View {
     // ✅ 랜덤100 끝났을 때 알럿
     @State private var showEndOfRandomAlert = false
 
+    // 스와이프로 카드가 날아가는 중에는 다른 입력을 막아 엉뚱한 사진이 처리되지 않게 한다.
+    @State private var isCommittingSwipe = false
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
@@ -113,21 +116,9 @@ struct PhotoReviewView: View {
                                         .onEnded { value in
                                             let threshold: CGFloat = 120
                                             if value.translation.width > threshold {
-                                                withAnimation(.spring()) {
-                                                    dragOffset = CGSize(width: 1000, height: 0)
-                                                }
-                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                                    dragOffset = .zero
-                                                    performLike()
-                                                }
+                                                commitSwipe(toRight: true, action: performLike)
                                             } else if value.translation.width < -threshold {
-                                                withAnimation(.spring()) {
-                                                    dragOffset = CGSize(width: -1000, height: 0)
-                                                }
-                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                                    dragOffset = .zero
-                                                    performDelete()
-                                                }
+                                                commitSwipe(toRight: false, action: performDelete)
                                             } else {
                                                 withAnimation(.spring()) { dragOffset = .zero }
                                             }
@@ -238,6 +229,7 @@ struct PhotoReviewView: View {
                         }
                     }
                 }
+                .allowsHitTesting(!isCommittingSwipe)
 
                 if showLikeOverlay {
                     overlaySystemIcon(systemName: "heart.fill", color: AppTheme.accentDark)
@@ -268,6 +260,7 @@ struct PhotoReviewView: View {
             if let img = shareImage { ActivityView(activityItems: [img]) }
         }
         .toolbar(.visible, for: .navigationBar)
+        .onDisappear { vm.stopCaching() }
     }
 
     private func overlaySystemIcon(systemName: String, color: Color) -> some View {
@@ -278,19 +271,37 @@ struct PhotoReviewView: View {
             .foregroundColor(color)
             .shadow(color: AppTheme.shadow, radius: 10, x: 0, y: 6)
             .transition(.scale.combined(with: .opacity))
-            .animation(.easeOut(duration: 0.2), value: showLikeOverlay || showDeleteOverlay)
+            .allowsHitTesting(false)
+    }
+
+    private func commitSwipe(toRight: Bool, action: @escaping () -> Void) {
+        isCommittingSwipe = true
+        withAnimation(.spring()) {
+            dragOffset = CGSize(width: toRight ? 1000 : -1000, height: 0)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            dragOffset = .zero
+            action()
+            isCommittingSwipe = false
+        }
+    }
+
+    // 오버레이는 withAnimation으로 토글해야 transition이 실제로 적용된다.
+    private func flashOverlay(_ flag: Binding<Bool>) {
+        withAnimation(.easeOut(duration: 0.2)) { flag.wrappedValue = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.easeOut(duration: 0.2)) { flag.wrappedValue = false }
+        }
     }
 
     private func performLike() {
-        showLikeOverlay = true
+        flashOverlay($showLikeOverlay)
         vm.like()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { showLikeOverlay = false }
     }
 
     private func performDelete() {
-        showDeleteOverlay = true
+        flashOverlay($showDeleteOverlay)
         vm.delete()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { showDeleteOverlay = false }
     }
 
     var filterSheet: some View {

@@ -72,7 +72,7 @@ struct HomeView: View {
                 .padding(.bottom, 24)
             }
             .onAppear { refreshTrashCount() }
-            .onChange(of: scenePhase) { phase in
+            .onChange(of: scenePhase) { _, phase in
                 if phase == .active {
                     refreshTrashCount()
                 }
@@ -82,7 +82,6 @@ struct HomeView: View {
     }
 
     private func refreshTrashCount() {
-        let ids = UserDefaults.standard.array(forKey: trashedPhotosKey) as? [String] ?? []
-        trashCount = ids.count
+        trashCount = ReviewStateStore.trashCount()
     }
 }
