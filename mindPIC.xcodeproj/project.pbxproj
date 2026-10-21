@@ -412,6 +412,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = mindPIC/Info.plist;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "사진을 삭제하거나 즐겨찾기 설정을 하기 위해 사진 라이브러리를 수정합니다.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "사진을 정리하기 위해 사진 라이브러리에 접근합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -444,6 +445,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = mindPIC/Info.plist;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "사진을 삭제하거나 즐겨찾기 설정을 하기 위해 사진 라이브러리를 수정합니다.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "사진을 정리하기 위해 사진 라이브러리에 접근합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
