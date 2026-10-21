@@ -30,11 +30,10 @@ final class ScreenshotTests: XCTestCase {
         ]
         app.launch()
 
-        // 1. 홈 (스플래시가 끝날 때까지 대기)
+        // 스플래시가 끝날 때까지 대기
         let start = app.buttons["home.start"]
         XCTAssertTrue(start.waitForExistence(timeout: 10))
         waitUntilHittable(start)
-        snapshot("01-home")
 
         // 2. 리뷰 화면
         start.tap()
@@ -73,10 +72,15 @@ final class ScreenshotTests: XCTestCase {
         pause(2) // 썸네일 로딩 대기
         snapshot("05-trash")
 
-        // 6. 사용법
+        // 1. 홈: 사진 접근을 허용하고 몇 장 정리한 뒤라 "본 사진 n / 전체"와 휴지통 수가 보인다.
         goBack()
         let info = app.buttons["home.info"]
         XCTAssertTrue(info.waitForExistence(timeout: 5))
+        waitUntilHittable(info)
+        pause(1) // 전체 사진 수 계산 대기
+        snapshot("01-home")
+
+        // 6. 사용법
         waitUntilHittable(info) // 뒤로 가기 애니메이션 중에 누르면 무시된다
         info.tap()
         XCTAssertTrue(app.buttons["sheet.close"].waitForExistence(timeout: 3))

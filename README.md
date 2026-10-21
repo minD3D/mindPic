@@ -18,6 +18,7 @@
 | 👉 오른쪽으로 밀기 | **좋아요** — '사진' 앱 즐겨찾기에 추가 |
 | 👈 왼쪽으로 밀기 | **휴지통** — 앱 휴지통으로 이동 (바로 실행 취소 가능) |
 | 👆 탭 | **보관** — 그대로 두고 다음 사진으로 |
+| ✋ 길게 누르기 | **전체 화면** — 사진 전체를 화면 가득 보기 (손을 떼면 돌아와요) |
 
 스와이프가 어색하면 사진 아래 **휴지통 · 보관 · 좋아요** 버튼으로도 똑같이 할 수 있어요.
 
@@ -31,7 +32,8 @@
 ### 1. 홈
 
 - **사진 탐색 시작**을 누르면 바로 정리를 시작합니다.
-- 지금까지 **본 사진** 수와 **휴지통**에 모인 사진 수를 한눈에 볼 수 있어요.
+- 사진첩 전체 중 **본 사진**이 몇 장인지(예: 6 / 11)와 **휴지통**에 모인 사진 수를 한눈에 볼 수 있어요.
+- 휴지통을 비운 적이 있다면 **지금까지 확보한 공간**도 보여줘요.
 - 오른쪽 위 ⚙️ **설정**에서 본 사진 기록을 초기화하거나 사진 접근 권한을 바꿀 수 있고, ❓ **사용법**에서 동작을 다시 확인할 수 있어요.
 
 </td>
@@ -46,6 +48,7 @@
 - 위쪽 **진행 막대**로 몇 장 남았는지 확인하고, 사진 왼쪽 아래에서 **찍은 날짜**를 볼 수 있어요.
 - 이미 즐겨찾기에 있는 사진은 왼쪽 위에 **하트 배지**가 붙어요.
 - 다음 사진이 카드 뒤에 미리 준비되어 있어서, 넘기는 순간 바로 선명하게 보여요.
+- 카드는 화면에 맞게 사진을 잘라 보여줘요. 사진을 **길게 누르고 있으면** 잘린 부분 없이 전체 화면으로 볼 수 있고, 손을 떼면 돌아와요.
 - **이전**으로 돌아가거나 **5장 건너뛰기**로 빠르게 넘길 수 있고, 오른쪽 위 버튼으로 사진을 **공유**할 수 있어요.
 
 </td>
@@ -69,13 +72,13 @@
 
 왼쪽 위 필터 버튼으로 정리할 사진을 고릅니다.
 
+- **안 본 사진만 보기** — 한 번 넘긴 사진은 다시 나오지 않게 (필터 맨 위에 있어요)
 - **랜덤 100장** — 부담 없이 조금씩 (기본)
 - **랜덤 1개월** — 잊고 있던 한 달을 꺼내 보기
 - **N년 전 오늘** (±15일) — 그날의 추억을 다시 보며 정리
 - **최근 7일 / 30일**, **원하는 달 선택**
 - **인물 사진**, **즐겨찾기 안 된 사진**, **스크린샷**, **연사**
 - **기기에 있는 사진만 보기** — iCloud에서 받아야 하는 사진은 건너뛰어 기다림 없이 보기
-- **안 본 사진만 보기** — 한 번 넘긴 사진은 다시 나오지 않게
 
 </td>
 </tr>
@@ -86,8 +89,10 @@
 ### 5. 휴지통에서 마지막 확인
 
 - 왼쪽으로 민 사진은 여기 모입니다. 아직 사진첩에서 지워지지 않았어요.
+- 위쪽에 **비우면 확보할 수 있는 용량**이 표시돼요.
 - 사진을 **탭하거나 길게 눌러 복원**할 수 있어요.
 - **휴지통 비우기**를 누르면 시스템 확인 창이 뜨고, 확인하면 '사진' 앱의 **최근 삭제된 항목**으로 이동해 30일 동안 한 번 더 되살릴 수 있어요.
+- 비우고 나면 **이번에 확보한 공간**과 **지금까지의 합계**를 보여줘요. (실제 공간은 '최근 삭제된 항목'을 비우거나 30일이 지나면 비워져요.)
 
 </td>
 </tr>
@@ -213,14 +218,15 @@ App Store Connect 입력값과 순서는 [출시 체크리스트](docs/release-c
 | 👉 Swipe right | **Like** — adds to Favorites in the Photos app |
 | 👈 Swipe left | **Trash** — moves to the in-app trash (undo right away) |
 | 👆 Tap | **Keep** — leave it and see the next photo |
+| ✋ Press and hold | **Full screen** — see the whole photo (release to go back) |
 
 Prefer buttons? **Trash · Keep · Like** sit right below the photo.
 
-- **Home**: see how many photos you've reviewed and trashed, then tap **Start Reviewing**.
-- **Review**: a progress bar shows how far you are, the capture date sits on the photo, and photos already in Favorites get a heart badge. The next photo waits behind the current card, so it's sharp the moment you swipe.
+- **Home**: see how many photos you've reviewed out of your whole library (e.g. 6 / 11), how many are in the trash, and how much space you've freed so far.
+- **Review**: a progress bar shows how far you are, the capture date sits on the photo, and photos already in Favorites get a heart badge. The next photo waits behind the current card, so it's sharp the moment you swipe. Press and hold to see the whole, uncropped photo full screen.
 - **Undo**: tap **Undo** right after trashing a photo, or restore it later from the trash.
-- **Filters**: Random 100, random month, on this day N years ago (±15 days), last 7/30 days, any month, portraits, not in Favorites, screenshots, bursts — plus **On-Device Photos Only** and **Unseen Only**.
-- **Trash**: tap or long-press to restore. **Empty Trash** moves photos to "Recently Deleted" in the Photos app, where they stay for 30 days.
+- **Filters**: **Unseen Only** sits at the top, then Random 100, random month, on this day N years ago (±15 days), last 7/30 days, any month, portraits, not in Favorites, screenshots, bursts — plus **On-Device Photos Only**.
+- **Trash**: see how much space emptying will free; tap or long-press to restore. **Empty Trash** moves photos to "Recently Deleted" in the Photos app (kept for 30 days) and shows how much you just freed.
 - **Fast with iCloud Photos**: on-device photos are shown first and iCloud-only photos are downloaded ahead of time (not on cellular, Low Data, or Low Power mode), with a progress ring and Retry if a download fails.
 - **Private by design**: no account, no ads, no analytics — everything stays on your device.
 - Korean and English, Dynamic Type, VoiceOver. Requires iPhone with iOS 17.0+; built with SwiftUI and PhotoKit.
