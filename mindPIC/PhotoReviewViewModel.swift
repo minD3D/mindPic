@@ -22,6 +22,9 @@ final class PhotoReviewViewModel: ObservableObject {
     // ✅ 랜덤100 다 봤을 때 팝업 띄우기 트리거
     @Published var shouldAskForNewRandom: Bool = false
 
+    // 이번에 좋아요한 사진. PHAsset은 조회 시점의 값이라 isFavorite가 바로 바뀌지 않아 따로 기억한다.
+    @Published private var likedIDs: Set<String> = []
+
     // 마지막으로 휴지통에 넣은 사진 (실행 취소용)
     @Published private var lastDeleted: (item: PhotoItem, index: Int)?
     var canUndoDelete: Bool { lastDeleted != nil }
@@ -79,6 +82,11 @@ final class PhotoReviewViewModel: ObservableObject {
         let index = currentIndex + 1
         guard index < photos.count else { return nil }
         return photos[index]
+    }
+
+    // 사진 앱 즐겨찾기에 들어 있거나 이번에 좋아요한 사진
+    func isLiked(_ item: PhotoItem) -> Bool {
+        item.asset.isFavorite || likedIDs.contains(item.id)
     }
 
     var currentDateString: String? {
@@ -374,7 +382,9 @@ final class PhotoReviewViewModel: ObservableObject {
     }
 
     func like() {
-        guard let asset = currentPhoto?.asset else { return }
+        guard let current = currentPhoto else { return }
+        let asset = current.asset
+        likedIDs.insert(current.id)
         markCurrentAsSeen()
         next()
         Task {
