@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var trashCount = 0
+    @State private var seenCount = 0
     @State private var showSettings = false
     @State private var showInfo = false
     @Environment(\.scenePhase) private var scenePhase
@@ -11,27 +12,53 @@ struct HomeView: View {
             ZStack {
                 AppBackground()
 
-                VStack(spacing: 22) {
-                    Spacer().frame(height: 24)
+                VStack(spacing: 0) {
+                    HStack(spacing: 10) {
+                        Spacer()
 
-                    VStack(spacing: 6) {
-                        Text("mind PIC")
-                            .font(AppFont.title)
-                            .foregroundColor(AppTheme.textPrimary)
+                        Button {
+                            showSettings = true
+                        } label: {
+                            AppIconButtonLabel(systemImage: "gearshape")
+                        }
+                        .accessibilityLabel("설정")
+                        .accessibilityIdentifier("home.settings")
+
+                        Button {
+                            showInfo = true
+                        } label: {
+                            AppIconButtonLabel(systemImage: "questionmark")
+                        }
+                        .accessibilityLabel("사용법")
+                        .accessibilityIdentifier("home.info")
+                    }
+                    .padding(.top, 8)
+
+                    Spacer()
+
+                    VStack(spacing: 10) {
+                        AppLogo(size: 220)
 
                         Text("사진을 빠르게 정리")
                             .font(AppFont.subtitle)
-                            .foregroundColor(AppTheme.textSecondary)
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
 
-                    Spacer().frame(height: 18)
+                    Spacer()
 
-                    VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        statTile(title: "본 사진", count: seenCount, systemImage: "eye")
+                        statTile(title: "휴지통", count: trashCount, systemImage: "trash")
+                    }
+                    .padding(.bottom, 16)
+
+                    VStack(spacing: 10) {
                         NavigationLink {
                             PhotoReviewView()
                         } label: {
                             AppButtonLabel(
                                 text: Text("사진 탐색 시작"),
+                                systemImage: "rectangle.stack",
                                 foreground: .white,
                                 background: AppTheme.accentDark,
                                 border: nil,
@@ -44,54 +71,62 @@ struct HomeView: View {
                             TrashView()
                         } label: {
                             AppButtonLabel(
-                                text: trashCount > 0 ? Text("휴지통 보기 (\(trashCount))") : Text("휴지통 보기"),
+                                text: Text("휴지통 보기"),
                                 foreground: AppTheme.textPrimary,
-                                background: AppTheme.cardStrong,
+                                background: AppTheme.surface,
                                 border: AppTheme.border,
                                 shadow: false
                             )
                         }
                         .accessibilityIdentifier("home.trash")
                     }
-
-                    Spacer()
-
-                    HStack {
-                        Button {
-                            showSettings = true
-                        } label: {
-                            Label("설정", systemImage: "gear")
-                        }
-                        .accessibilityIdentifier("home.settings")
-
-                        Spacer()
-
-                        Button {
-                            showInfo = true
-                        } label: {
-                            Label("사용법", systemImage: "info.circle")
-                        }
-                        .accessibilityIdentifier("home.info")
-                    }
-                    .font(AppFont.buttonSmall)
-                    .foregroundColor(AppTheme.textSecondary)
                 }
                 .padding(.horizontal, 24)
-                .padding(.bottom, 24)
+                .padding(.bottom, 20)
             }
-            .onAppear { refreshTrashCount() }
+            .onAppear { refreshCounts() }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active {
-                    refreshTrashCount()
+                    refreshCounts()
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
-            .sheet(isPresented: $showSettings) { SettingsSheet() }
+            .sheet(isPresented: $showSettings, onDismiss: refreshCounts) { SettingsSheet() }
             .sheet(isPresented: $showInfo) { InfoSheet() }
         }
     }
 
-    private func refreshTrashCount() {
+    private func statTile(title: LocalizedStringKey, count: Int, systemImage: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(AppTheme.accent)
+                .frame(width: 36, height: 36)
+                .background(AppTheme.accentSoft, in: Circle())
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(AppFont.caption)
+                    .foregroundStyle(AppTheme.textSecondary)
+                Text("\(count)장")
+                    .font(.system(.title3, design: .rounded).weight(.semibold))
+                    .foregroundStyle(AppTheme.textPrimary)
+                    .contentTransition(.numericText())
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(AppTheme.surface.opacity(0.7), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(AppTheme.border, lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    private func refreshCounts() {
         trashCount = ReviewStateStore.trashCount()
+        seenCount = ReviewStateStore.seenCount()
     }
 }
