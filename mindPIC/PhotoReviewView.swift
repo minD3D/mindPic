@@ -84,54 +84,14 @@ struct PhotoReviewView: View {
                             .padding(.horizontal, 24)
                             .padding(.top, 2)
 
-                        ZStack(alignment: .bottomLeading) {
-                            AssetImageView(asset: current.asset)
-                                .id(current.id)
-                                .frame(width: geo.size.width * 0.9,
-                                       height: geo.size.height * 0.63)
-                                .background(AppTheme.surfaceMuted)
-                                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                                .overlay { swipeHint }
-                                .overlay(alignment: .bottomLeading) {
-                                    if let date = vm.currentDateString {
-                                        Label(date, systemImage: "calendar")
-                                            .font(AppFont.caption)
-                                            .padding(.horizontal, 10)
-                                            .padding(.vertical, 6)
-                                            .background(.black.opacity(0.35), in: Capsule())
-                                            .foregroundStyle(.white)
-                                            .padding(14)
-                                            .opacity(dragOffset == .zero ? 1 : 0)
-                                            .allowsHitTesting(false)
-                                    }
-                                }
-                                .shadow(color: AppTheme.shadow, radius: 20, x: 0, y: 10)
-                                .offset(dragOffset)
-                                .rotationEffect(.degrees(Double(dragOffset.width / 15)))
-                                .scaleEffect(dragOffset == .zero ? 1.0 : 0.98)
-                                .animation(.spring(response: 0.25, dampingFraction: 0.8),
-                                           value: dragOffset)
-                                .contentShape(Rectangle())
-                                .gesture(
-                                    DragGesture()
-                                        .onChanged { value in
-                                            dragOffset = value.translation
-                                        }
-                                        .onEnded { value in
-                                            if value.translation.width > swipeThreshold {
-                                                commitSwipe(toRight: true, action: performLike)
-                                            } else if value.translation.width < -swipeThreshold {
-                                                commitSwipe(toRight: false, action: performDelete)
-                                            } else {
-                                                withAnimation(.spring()) { dragOffset = .zero }
-                                            }
-                                        }
-                                )
-                                .onTapGesture {
-                                    vm.keep()
-                                }
-                                .accessibilityLabel("사진")
-                                .accessibilityHint("오른쪽으로 밀면 좋아요, 왼쪽으로 밀면 휴지통, 탭하면 보관 후 다음 사진")
+                        // 다음 사진을 현재 카드 뒤에 미리 그려 둔다. 넘기는 순간 이미 불러온 카드가 앞으로 나온다.
+                        // ForEach의 id로 카드가 같은 뷰로 유지되어야 이미지를 다시 불러오지 않는다.
+                        ZStack {
+                            ForEach(cardStack(current: current), id: \.id) { item in
+                                photoCard(item, isTop: item.id == current.id,
+                                          size: CGSize(width: geo.size.width * 0.9,
+                                                       height: geo.size.height * 0.63))
+                            }
                         }
                         .frame(maxWidth: .infinity, maxHeight: geo.size.height * 0.68)
                         .padding(.top, 6)
@@ -231,8 +191,71 @@ struct PhotoReviewView: View {
         .onDisappear { vm.stopCaching() }
     }
 
+    // 뒤 카드(다음 사진) → 앞 카드(현재 사진) 순서. ZStack은 나중 것이 위에 그려진다.
+    private func cardStack(current: PhotoItem) -> [PhotoItem] {
+        [vm.nextPhoto, current].compactMap { $0 }
+    }
+
+    // 앞/뒤 카드가 같은 뷰 구조를 쓰게 해서, 뒤 카드가 앞으로 올 때 불러온 이미지가 유지되게 한다.
+    private func photoCard(_ item: PhotoItem, isTop: Bool, size: CGSize) -> some View {
+        AssetImageView(asset: item.asset)
+            .frame(width: size.width, height: size.height)
+            .background(AppTheme.surfaceMuted)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay {
+                if isTop { swipeHint }
+            }
+            .overlay(alignment: .bottomLeading) {
+                if isTop, let date = vm.currentDateString {
+                    Label(date, systemImage: "calendar")
+                        .font(AppFont.caption)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.black.opacity(0.35), in: Capsule())
+                        .foregroundStyle(.white)
+                        .padding(14)
+                        .opacity(dragOffset == .zero ? 1 : 0)
+                        .allowsHitTesting(false)
+                }
+            }
+            .shadow(color: AppTheme.shadow, radius: isTop ? 20 : 8, x: 0, y: isTop ? 10 : 4)
+            .offset(isTop ? dragOffset : CGSize(width: 0, height: 10))
+            .rotationEffect(.degrees(isTop ? Double(dragOffset.width / 15) : 0))
+            .scaleEffect(isTop ? (dragOffset == .zero ? 1.0 : 0.98) : 0.94)
+            .animation(.spring(response: 0.25, dampingFraction: 0.8), value: dragOffset)
+            .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isTop)
+            .contentShape(Rectangle())
+            .gesture(cardDragGesture, including: isTop ? .all : .none)
+            .onTapGesture {
+                if isTop { vm.keep() }
+            }
+            .allowsHitTesting(isTop)
+            .accessibilityHidden(!isTop)
+            .accessibilityLabel("사진")
+            .accessibilityHint("오른쪽으로 밀면 좋아요, 왼쪽으로 밀면 휴지통, 탭하면 보관 후 다음 사진")
+    }
+
+    private var cardDragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                dragOffset = value.translation
+            }
+            .onEnded { value in
+                if value.translation.width > swipeThreshold {
+                    commitSwipe(toRight: true, action: performLike)
+                } else if value.translation.width < -swipeThreshold {
+                    commitSwipe(toRight: false, action: performDelete)
+                } else {
+                    withAnimation(.spring()) { dragOffset = .zero }
+                }
+            }
+    }
+
     private var filterChipText: String {
-        vm.onlyUnseen ? String(localized: "\(vm.filterType.title) · 안 본 사진") : vm.filterType.title
+        var text = vm.filterType.title
+        if vm.onlyUnseen { text = String(localized: "\(text) · 안 본 사진") }
+        if vm.onlyLocal { text = String(localized: "\(text) · 기기 사진") }
+        return text
     }
 
     // MARK: - 하위 View
@@ -496,6 +519,14 @@ struct PhotoReviewView: View {
                     filterRow("연사(버스트)", isSelected: vm.filterType == .burst) {
                         vm.selectBurst()
                     }
+                }
+
+                Section(header: Text("iCloud 사진"),
+                        footer: Text("iCloud에서 받아야 하는 사진은 건너뛰어 기다림 없이 볼 수 있어요.")) {
+                    Toggle("기기에 있는 사진만 보기", isOn: $vm.onlyLocal)
+                        .onChange(of: vm.onlyLocal) {
+                            vm.reloadByFilter()
+                        }
                 }
 
                 Section(header: Text("리뷰 상태"),

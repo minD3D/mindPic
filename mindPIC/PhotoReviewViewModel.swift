@@ -13,6 +13,12 @@ final class PhotoReviewViewModel: ObservableObject {
     // 안 본 사진만 보기 토글
     @Published var onlyUnseen: Bool = false
 
+    // 기기에 있는 사진만 보기 토글 (iCloud에서 받아야 하는 사진은 건너뜀). 앱을 다시 열어도 유지한다.
+    @Published var onlyLocal: Bool = UserDefaults.standard.bool(forKey: PhotoReviewViewModel.onlyLocalKey) {
+        didSet { UserDefaults.standard.set(onlyLocal, forKey: Self.onlyLocalKey) }
+    }
+    private static let onlyLocalKey = "onlyLocalPhotos"
+
     // ✅ 랜덤100 다 봤을 때 팝업 띄우기 트리거
     @Published var shouldAskForNewRandom: Bool = false
 
@@ -31,6 +37,27 @@ final class PhotoReviewViewModel: ObservableObject {
     // 현재 프리히팅 중인 asset 목록 (변경분만 캐시 시작/중지하기 위함)
     private var cachedAssets: [PHAsset] = []
 
+    // 사진 ID → 기기에 리뷰 화질로 바로 보여줄 수 있는지 (false면 iCloud에서 받아야 함)
+    private var localStatus: [String: Bool] = [:]
+    private var availabilityTask: Task<Void, Never>?
+
+    // 랜덤 100장에서 iCloud 사진을 기기에 있는 사진으로 바꿔 넣을 때 쓰는 여분 후보
+    private var randomReserve: [PhotoItem] = []
+    nonisolated private static let randomPoolSize = 300
+    private static let randomCount = 100
+
+    // 기기 확인은 앞으로 볼 사진 중 이 개수 안에서만 한다 (수천 장 필터에서 계속 돌지 않도록).
+    private static let availabilityLookahead = 40
+
+    // iCloud에만 있는 사진은 차례가 오기 전에 미리 받아 둔다.
+    // 셀룰러·저데이터 모드에서는 데이터를, 저전력 모드에서는 배터리를 아끼려고 받지 않는다.
+    private var cloudDownloadAhead: Int {
+        if NetworkMonitor.shared.isExpensiveOrConstrained || ProcessInfo.processInfo.isLowPowerModeEnabled {
+            return 0
+        }
+        return 10
+    }
+
     private static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .medium
@@ -45,6 +72,13 @@ final class PhotoReviewViewModel: ObservableObject {
     var currentPhoto: PhotoItem? {
         guard currentIndex < photos.count else { return nil }
         return photos[currentIndex]
+    }
+
+    // 카드 뒤에 미리 그려 둘 다음 사진
+    var nextPhoto: PhotoItem? {
+        let index = currentIndex + 1
+        guard index < photos.count else { return nil }
+        return photos[index]
     }
 
     var currentDateString: String? {
@@ -116,17 +150,79 @@ final class PhotoReviewViewModel: ObservableObject {
                 let missing = trashed.subtracting(items.map(\.id))
                 if !missing.isEmpty { updateTrash { $0.removeFromTrash(missing) } }
             }
-            finishLoading(with: items)
+
+            var shown = items
+            var reserve: [PhotoItem] = []
+            if filter == .random100 {
+                shown = Array(items.prefix(Self.randomCount))
+                reserve = Array(items.dropFirst(Self.randomCount))
+            }
+
+            // 화면을 열자마자 흐린 사진이 보이지 않게, 첫 장은 기기에 있는 사진으로 맞춘다.
+            var status: [String: Bool] = [:]
+            if filter != .trash {
+                (shown, reserve, status) = await prepareFirstPhoto(shown, reserve: reserve)
+                guard generation == loadGeneration else { return }
+            }
+            finishLoading(with: shown, reserve: reserve, status: status)
         }
     }
 
-    private func finishLoading(with items: [PhotoItem]) {
+    // 첫 장이 iCloud에만 있으면:
+    // - '기기에 있는 사진만' 모드: 기기에 있는 사진이 나올 때까지 앞쪽 iCloud 사진을 뺀다.
+    // - 그 외: 앞쪽 몇 장 중 기기에 있는 사진을 맨 앞으로 옮기고, 없으면 랜덤 여분에서 가져온다.
+    private func prepareFirstPhoto(
+        _ items: [PhotoItem], reserve: [PhotoItem]
+    ) async -> ([PhotoItem], [PhotoItem], [String: Bool]) {
+        let targetSize = ReviewImageSpec.targetSize
+        var items = items
+        var reserve = reserve
+        var status: [String: Bool] = [:]
+
+        func check(_ item: PhotoItem) async -> Bool {
+            if LocalAvailabilityCache.knownLocal.contains(item.id) { return true }
+            let isLocal = await Self.isLocallyAvailable(item.asset, targetSize: targetSize)
+            status[item.id] = isLocal
+            if isLocal { LocalAvailabilityCache.knownLocal.insert(item.id) }
+            return isLocal
+        }
+
+        if onlyLocal {
+            while let first = items.first, !(await check(first)) {
+                items.removeFirst()
+            }
+            return (items, reserve, status)
+        }
+
+        for index in items.indices.prefix(8) {
+            guard await check(items[index]) else { continue }
+            if index > 0 { items.insert(items.remove(at: index), at: 0) }
+            return (items, reserve, status)
+        }
+        for _ in 0..<3 where !reserve.isEmpty && !items.isEmpty {
+            let candidate = reserve.removeFirst()
+            if await check(candidate) {
+                items.insert(candidate, at: 0)
+                items.removeLast()   // 랜덤 100장 개수 유지
+                break
+            }
+        }
+        return (items, reserve, status)
+    }
+
+    private func finishLoading(with items: [PhotoItem], reserve: [PhotoItem] = [], status: [String: Bool] = [:]) {
+        randomReserve = reserve
         photos = items
         currentIndex = 0
         isLoading = false
         shouldAskForNewRandom = false
         lastDeleted = nil
+        localStatus = status
+        for item in items where LocalAvailabilityCache.knownLocal.contains(item.id) {
+            localStatus[item.id] = true
+        }
         updateCaching()
+        checkAvailability()
     }
 
     private func updateTrash(_ change: (ReviewStateStore) -> Void) {
@@ -145,9 +241,10 @@ final class PhotoReviewViewModel: ObservableObject {
 
         switch filter {
         case .random100:
-            // 전체를 PhotoItem으로 만든 뒤 섞지 않고, 필요한 100장만 무작위로 꺼낸다.
+            // 전체를 PhotoItem으로 만든 뒤 섞지 않고, 필요한 만큼만 무작위로 꺼낸다.
+            // 앞 100장을 보여주고 나머지는 iCloud 사진을 대신할 여분으로 쓴다.
             let result = PHAsset.fetchAssets(with: .image, options: nil)
-            return randomIndices(count: result.count, limit: 100) {
+            return randomIndices(count: result.count, limit: randomPoolSize) {
                 isIncluded(result.object(at: $0).localIdentifier)
             }
             .map { PhotoItem(asset: result.object(at: $0)) }
@@ -263,6 +360,7 @@ final class PhotoReviewViewModel: ObservableObject {
         if newIndex != currentIndex {
             currentIndex = newIndex
             updateCaching()
+            if availabilityTask == nil { checkAvailability() }
         }
     }
 
@@ -301,6 +399,7 @@ final class PhotoReviewViewModel: ObservableObject {
             currentIndex = photos.count - 1
         }
         updateCaching()
+        if availabilityTask == nil { checkAvailability() }
     }
 
     // 방금 휴지통에 넣은 사진을 원래 자리로 되돌린다.
@@ -358,15 +457,132 @@ final class PhotoReviewViewModel: ObservableObject {
         }
     }
 
+    // MARK: - 기기에 있는 사진 먼저 보여주기
+    // 앞으로 볼 사진이 기기에 있는지 하나씩 확인하고, 있는 사진을 앞으로 당긴다.
+    // iCloud에만 있는 사진은 뒤로 미루고 updateCaching()에서 미리 받기 시작한다.
+    private func checkAvailability() {
+        availabilityTask?.cancel()
+        availabilityTask = nil
+        guard filterType != .trash else { return }
+
+        let generation = loadGeneration
+        let targetSize = ReviewImageSpec.targetSize
+        availabilityTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self, generation == self.loadGeneration,
+                      let next = self.nextUncheckedPhoto() else { break }
+                let isLocal = await Self.isLocallyAvailable(next.asset, targetSize: targetSize)
+                guard !Task.isCancelled, generation == self.loadGeneration else { return }
+                self.localStatus[next.id] = isLocal
+                if isLocal {
+                    LocalAvailabilityCache.knownLocal.insert(next.id)
+                } else {
+                    await self.handleCloudPhoto(next, targetSize: targetSize, generation: generation)
+                    guard !Task.isCancelled, generation == self.loadGeneration else { return }
+                }
+                self.moveLocalPhotosForward()
+            }
+            guard !Task.isCancelled, let self else { return }
+            self.availabilityTask = nil
+            let checked = self.localStatus.values
+            imageLoadLog.notice("availability: \(checked.filter { $0 }.count, privacy: .public) local, \(checked.filter { !$0 }.count, privacy: .public) iCloud")
+        }
+    }
+
+    // iCloud에만 있는 사진: 랜덤 100장이면 여분 중 기기에 있는 사진으로 바꾸고,
+    // '기기에 있는 사진만' 모드면 목록에서 뺀다. 둘 다 아니면 뒤로 미뤄 미리 받는다.
+    private func handleCloudPhoto(_ item: PhotoItem, targetSize: CGSize, generation: Int) async {
+        if filterType == .random100, let replacement = await takeLocalReplacement(targetSize: targetSize) {
+            guard generation == loadGeneration,
+                  let index = photos.firstIndex(where: { $0.id == item.id }), index > currentIndex
+            else { return }
+            photos[index] = replacement
+            localStatus[replacement.id] = true
+            updateCaching()
+        } else if onlyLocal,
+                  let index = photos.firstIndex(where: { $0.id == item.id }), index > currentIndex {
+            photos.remove(at: index)
+            updateCaching()
+        }
+    }
+
+    // 여분 후보를 최대 3장까지 확인해 기기에 있는 사진을 하나 꺼낸다.
+    private func takeLocalReplacement(targetSize: CGSize) async -> PhotoItem? {
+        for _ in 0..<3 {
+            guard !randomReserve.isEmpty else { return nil }
+            let candidate = randomReserve.removeFirst()
+            if LocalAvailabilityCache.knownLocal.contains(candidate.id) { return candidate }
+            if await Self.isLocallyAvailable(candidate.asset, targetSize: targetSize) {
+                LocalAvailabilityCache.knownLocal.insert(candidate.id)
+                return candidate
+            }
+        }
+        return nil
+    }
+
+    private func nextUncheckedPhoto() -> PhotoItem? {
+        let start = currentIndex + 1
+        guard start < photos.count else { return nil }
+        let end = min(photos.count, start + Self.availabilityLookahead)
+        return photos[start..<end].first { localStatus[$0.id] == nil }
+    }
+
+    // 지금 보는 사진 다음부터: 기기에 있음 → 아직 모름 → iCloud 순으로, 같은 그룹 안의 순서는 유지한다.
+    private func moveLocalPhotosForward() {
+        let start = currentIndex + 1
+        guard start < photos.count else { return }
+
+        let upcoming = Array(photos[start...])
+        let order = Self.availabilityOrder(ids: upcoming.map(\.id), status: localStatus)
+        guard order != Array(upcoming.indices) else { return }
+        photos.replaceSubrange(start..., with: order.map { upcoming[$0] })
+        updateCaching()
+    }
+
+    /// 기기에 있음(true) → 아직 모름(nil) → iCloud(false) 순으로 정렬한 인덱스. 같은 그룹 안의 순서는 유지한다.
+    nonisolated static func availabilityOrder(ids: [String], status: [String: Bool]) -> [Int] {
+        func rank(_ id: String) -> Int {
+            switch status[id] {
+            case true?: return 0
+            case nil: return 1
+            case false?: return 2
+            }
+        }
+        return ids.indices.sorted { (rank(ids[$0]), $0) < (rank(ids[$1]), $1) }
+    }
+
+    // 네트워크 없이 리뷰 화질 이미지를 받을 수 있으면 기기에 있는 것으로 본다.
+    nonisolated private static func isLocallyAvailable(_ asset: PHAsset, targetSize: CGSize) async -> Bool {
+        await withCheckedContinuation { continuation in
+            let opt = PHImageRequestOptions()
+            opt.isNetworkAccessAllowed = false
+            opt.deliveryMode = .highQualityFormat // 결과 핸들러가 한 번만 불린다
+            opt.resizeMode = .fast
+            PHImageManager.default().requestImage(
+                for: asset, targetSize: targetSize, contentMode: .aspectFill, options: opt
+            ) { image, info in
+                let inCloud = (info?[PHImageResultIsInCloudKey] as? Bool) ?? false
+                continuation.resume(returning: image != nil && !inCloud)
+            }
+        }
+    }
+
     // MARK: - 이미지 캐싱
-    // 현재 위치 기준 앞 5장 / 뒤 10장을 프리히팅하고, 바뀐 부분만 캐시를 갱신한다.
+    // 현재 위치 기준 뒤 1장 / 앞 4장을 프리히팅하고, 그 뒤의 iCloud 사진 몇 장은 미리 받아 둔다.
+    // 바뀐 부분만 캐시를 갱신한다. 너무 많이 미리 받으면 지금 보는 사진의 요청이 뒤로 밀린다.
     private func updateCaching() {
-        let window: [PHAsset]
-        if photos.isEmpty {
-            window = []
-        } else {
-            let range = max(0, currentIndex - 5)...min(photos.count - 1, currentIndex + 10)
+        var window: [PHAsset] = []
+        if !photos.isEmpty {
+            let range = max(0, currentIndex - 1)...min(photos.count - 1, currentIndex + 4)
             window = range.map { photos[$0].asset }
+
+            if range.upperBound + 1 < photos.count {
+                window += photos[(range.upperBound + 1)...]
+                    .lazy
+                    .filter { self.localStatus[$0.id] == false }
+                    .prefix(cloudDownloadAhead)
+                    .map(\.asset)
+            }
         }
 
         let newIDs = Set(window.map(\.localIdentifier))
@@ -390,6 +606,8 @@ final class PhotoReviewViewModel: ObservableObject {
     }
 
     func stopCaching() {
+        availabilityTask?.cancel()
+        availabilityTask = nil
         sharedImageManager.stopCachingImagesForAllAssets()
         cachedAssets = []
     }

@@ -74,3 +74,22 @@ struct RandomIndicesTests {
         #expect(PhotoReviewViewModel.randomIndices(count: 0, limit: 100) { _ in true }.isEmpty)
     }
 }
+
+struct AvailabilityOrderTests {
+
+    @Test func putsLocalFirstThenUnknownThenCloud() {
+        let ids = ["a", "b", "c", "d", "e"]
+        let status: [String: Bool] = ["a": false, "b": true, "d": true, "e": false]
+        let order = PhotoReviewViewModel.availabilityOrder(ids: ids, status: status)
+        #expect(order.map { ids[$0] } == ["b", "d", "c", "a", "e"])
+    }
+
+    @Test func keepsOrderWhenNothingIsKnown() {
+        let ids = ["a", "b", "c"]
+        #expect(PhotoReviewViewModel.availabilityOrder(ids: ids, status: [:]) == [0, 1, 2])
+    }
+
+    @Test func handlesEmptyList() {
+        #expect(PhotoReviewViewModel.availabilityOrder(ids: [], status: ["a": true]).isEmpty)
+    }
+}
