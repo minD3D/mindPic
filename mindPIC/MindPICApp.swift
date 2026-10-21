@@ -13,6 +13,7 @@ struct mindPICApp: App {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-uiTestResetState") {
             ReviewStateStore.resetAll()
+            UserDefaults.standard.removeObject(forKey: "onlyLocalPhotos")
         }
         #endif
     }
