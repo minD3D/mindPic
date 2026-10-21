@@ -14,13 +14,14 @@ enum AppTheme {
     static let danger = Color(red: 0.70, green: 0.34, blue: 0.30)
 }
 
+// relativeTo: 시스템 글자 크기(Dynamic Type) 설정에 맞춰 함께 커지도록 한다.
 enum AppFont {
-    static let title = Font.custom("AvenirNext-DemiBold", size: 34)
-    static let subtitle = Font.custom("AvenirNext-Regular", size: 16)
-    static let button = Font.custom("AvenirNext-DemiBold", size: 17)
-    static let buttonSmall = Font.custom("AvenirNext-Medium", size: 14)
-    static let body = Font.custom("AvenirNext-Regular", size: 15)
-    static let caption = Font.custom("AvenirNext-Regular", size: 12)
+    static let title = Font.custom("AvenirNext-DemiBold", size: 34, relativeTo: .largeTitle)
+    static let subtitle = Font.custom("AvenirNext-Regular", size: 16, relativeTo: .callout)
+    static let button = Font.custom("AvenirNext-DemiBold", size: 17, relativeTo: .headline)
+    static let buttonSmall = Font.custom("AvenirNext-Medium", size: 14, relativeTo: .subheadline)
+    static let body = Font.custom("AvenirNext-Regular", size: 15, relativeTo: .body)
+    static let caption = Font.custom("AvenirNext-Regular", size: 12, relativeTo: .caption)
 }
 
 struct AppBackground: View {
@@ -49,14 +50,14 @@ struct AppBackground: View {
 }
 
 struct AppButtonLabel: View {
-    let text: String
+    let text: Text
     let foreground: Color
     let background: Color
     let border: Color?
     let shadow: Bool
 
     var body: some View {
-        Text(text)
+        text
             .font(AppFont.button)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
@@ -72,11 +73,11 @@ struct AppButtonLabel: View {
 }
 
 struct AppChip: View {
-    let text: String
+    let text: Text
     let systemImage: String
 
     var body: some View {
-        Label(text, systemImage: systemImage)
+        Label { text } icon: { Image(systemName: systemImage) }
             .font(AppFont.buttonSmall)
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
@@ -87,5 +88,39 @@ struct AppChip: View {
                     .stroke(AppTheme.border, lineWidth: 1)
             )
             .cornerRadius(12)
+    }
+}
+
+// MARK: - 사진 권한 안내
+// 권한이 거부된 상태에서는 iOS가 다시 묻지 않으므로 설정 앱으로 안내한다.
+struct PhotoPermissionView: View {
+    var body: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "photo.on.rectangle.angled")
+                .font(.system(size: 44))
+                .foregroundColor(AppTheme.accentDark)
+
+            Text("사진 접근 권한이 필요해요")
+                .font(AppFont.button)
+                .foregroundColor(AppTheme.textPrimary)
+
+            Text("설정에서 mind PIC의 사진 접근을\n'전체 접근'으로 허용해 주세요.")
+                .font(AppFont.body)
+                .multilineTextAlignment(.center)
+                .foregroundColor(AppTheme.textSecondary)
+
+            Button { openAppSettings() } label: {
+                AppButtonLabel(
+                    text: Text("설정 열기"),
+                    foreground: .white,
+                    background: AppTheme.accentDark,
+                    border: nil,
+                    shadow: true
+                )
+            }
+            .padding(.horizontal, 48)
+            .padding(.top, 6)
+        }
+        .padding(.horizontal, 24)
     }
 }

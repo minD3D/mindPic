@@ -2,6 +2,8 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var trashCount = 0
+    @State private var showSettings = false
+    @State private var showInfo = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -29,7 +31,7 @@ struct HomeView: View {
                             PhotoReviewView()
                         } label: {
                             AppButtonLabel(
-                                text: "사진 탐색 시작",
+                                text: Text("사진 탐색 시작"),
                                 foreground: .white,
                                 background: AppTheme.accentDark,
                                 border: nil,
@@ -41,7 +43,7 @@ struct HomeView: View {
                             TrashView()
                         } label: {
                             AppButtonLabel(
-                                text: "🗑 휴지통 보기 (\(trashCount))",
+                                text: trashCount > 0 ? Text("휴지통 보기 (\(trashCount))") : Text("휴지통 보기"),
                                 foreground: AppTheme.textPrimary,
                                 background: AppTheme.cardStrong,
                                 border: AppTheme.border,
@@ -54,6 +56,7 @@ struct HomeView: View {
 
                     HStack {
                         Button {
+                            showSettings = true
                         } label: {
                             Label("설정", systemImage: "gear")
                         }
@@ -61,8 +64,9 @@ struct HomeView: View {
                         Spacer()
 
                         Button {
+                            showInfo = true
                         } label: {
-                            Label("정보", systemImage: "info.circle")
+                            Label("사용법", systemImage: "info.circle")
                         }
                     }
                     .font(AppFont.buttonSmall)
@@ -78,6 +82,8 @@ struct HomeView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showSettings) { SettingsSheet() }
+            .sheet(isPresented: $showInfo) { InfoSheet() }
         }
     }
 

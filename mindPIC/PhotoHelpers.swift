@@ -14,6 +14,13 @@ func requestPhotoAuth(completion: @escaping (Bool) -> Void) {
     }
 }
 
+// 권한이 한 번 거부되면 iOS는 다시 묻지 않으므로 설정 앱으로 보내야 한다.
+@MainActor
+func openAppSettings() {
+    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+    UIApplication.shared.open(url)
+}
+
 // MARK: - 리뷰 화면 이미지 요청 스펙
 // PHCachingImageManager는 targetSize / contentMode / options가 같아야 캐시를 재사용한다.
 // 프리히팅(ViewModel)과 실제 요청(AssetImageView)이 반드시 이 값을 같이 써야 캐시가 맞는다.
