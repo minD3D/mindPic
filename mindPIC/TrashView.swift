@@ -116,7 +116,9 @@ struct TrashView: View {
 
 private struct TrashThumbnailView: View {
     let asset: PHAsset
+    @Environment(\.displayScale) private var displayScale
     @State private var image: UIImage?
+    @State private var requestID: PHImageRequestID?
 
     var body: some View {
         GeometryReader { geo in
@@ -134,6 +136,7 @@ private struct TrashThumbnailView: View {
             }
             .clipped()
             .onAppear { loadThumbnail(containerSize: geo.size) }
+            .onDisappear { cancelRequest() }
         }
         .aspectRatio(1, contentMode: .fit)
         .cornerRadius(10)
@@ -146,15 +149,15 @@ private struct TrashThumbnailView: View {
 
     private func loadThumbnail(containerSize: CGSize) {
         guard image == nil else { return }
-        let scale = UIScreen.main.scale
-        let targetSize = CGSize(width: containerSize.width * scale, height: containerSize.height * scale)
+        let targetSize = CGSize(width: containerSize.width * displayScale,
+                                height: containerSize.height * displayScale)
 
         let opt = PHImageRequestOptions()
         opt.isNetworkAccessAllowed = true
         opt.deliveryMode = .opportunistic
         opt.resizeMode = .fast
 
-        sharedImageManager.requestImage(
+        requestID = sharedImageManager.requestImage(
             for: asset,
             targetSize: targetSize,
             contentMode: .aspectFill,
@@ -162,5 +165,10 @@ private struct TrashThumbnailView: View {
         ) { img, _ in
             if let img = img { image = img }
         }
+    }
+
+    private func cancelRequest() {
+        if let id = requestID { sharedImageManager.cancelImageRequest(id) }
+        requestID = nil
     }
 }
