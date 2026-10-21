@@ -253,7 +253,7 @@ struct PhotoReviewView: View {
         let isLike = dragOffset.width > 0
         let color = isLike ? AppTheme.accentDark : AppTheme.danger
 
-        return ZStack(alignment: isLike ? .topTrailing : .topLeading) {
+        return ZStack(alignment: isLike ? Alignment.topTrailing : Alignment.topLeading) {
             RoundedRectangle(cornerRadius: 24)
                 .fill(color.opacity(0.18 * progress))
 
@@ -432,7 +432,7 @@ struct PhotoReviewView: View {
                 }
             }
         }
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
     var filterSheet: some View {

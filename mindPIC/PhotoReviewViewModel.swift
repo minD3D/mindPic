@@ -97,10 +97,13 @@ final class PhotoReviewViewModel: ObservableObject {
         let generation = beginLoading()
 
         let trashed = store.trashedIDs
-        let seen = onlyUnseen ? store.seenIDs : []
-        let isIncluded: @Sendable (String) -> Bool = filter == .trash
-            ? { trashed.contains($0) }
-            : { !trashed.contains($0) && !seen.contains($0) }
+        let seen: Set<String> = onlyUnseen ? store.seenIDs : []
+        let isIncluded: @Sendable (String) -> Bool
+        if filter == .trash {
+            isIncluded = { trashed.contains($0) }
+        } else {
+            isIncluded = { !trashed.contains($0) && !seen.contains($0) }
+        }
 
         Task {
             let items = await Task.detached(priority: .userInitiated) {
