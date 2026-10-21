@@ -3,27 +3,133 @@
 **스와이프로 빠르게 끝내는 사진 정리 앱** (iOS)
 
 사진첩에 쌓인 사진을 한 장씩 넘기면서 남길 사진과 지울 사진을 빠르게 고릅니다.
+지운 사진은 바로 사라지지 않고 앱 휴지통에 모여서, 마지막에 한 번 더 확인할 수 있어요.
+
+<p align="center">
+  <img src="docs/screenshots/ko-01-home.png" width="200" alt="홈 화면">
+  <img src="docs/screenshots/ko-02-review.png" width="200" alt="사진 리뷰 화면">
+  <img src="docs/screenshots/ko-05-trash.png" width="200" alt="휴지통 화면">
+</p>
+
+## 한눈에 보기
 
 | 동작 | 결과 |
 |---|---|
-| 👉 오른쪽으로 밀기 | 좋아요 ('사진' 앱 즐겨찾기에 추가) |
-| 👈 왼쪽으로 밀기 | 앱 휴지통으로 이동 (실행 취소 가능) |
-| 👆 탭 | 보관하고 다음 사진으로 |
+| 👉 오른쪽으로 밀기 | **좋아요** — '사진' 앱 즐겨찾기에 추가 |
+| 👈 왼쪽으로 밀기 | **휴지통** — 앱 휴지통으로 이동 (바로 실행 취소 가능) |
+| 👆 탭 | **보관** — 그대로 두고 다음 사진으로 |
 
-## 주요 기능
+스와이프가 어색하면 사진 아래 **휴지통 · 보관 · 좋아요** 버튼으로도 똑같이 할 수 있어요.
 
-- **다양한 필터**: 랜덤 100장, 랜덤 1개월, N년 전 오늘, 최근 7/30일, 월 선택, 스크린샷, 연사, 인물 사진, 즐겨찾기 안 된 사진
-- **안 본 사진만 보기**: 이미 확인한 사진은 건너뛰기
-- **안전한 삭제**: 앱 휴지통에서 다시 확인·복원 → 비우면 '최근 삭제된 항목'으로 이동 (30일 보관)
-- **개인정보 보호**: 모든 처리는 기기 안에서만. 회원가입·서버·광고·분석 도구 없음
-- 한국어 / 영어 지원, Dynamic Type, VoiceOver 라벨
+## 화면별 사용법
 
-## 요구 사항
+<table>
+<tr>
+<td width="260"><img src="docs/screenshots/ko-01-home.png" width="240" alt="홈 화면"></td>
+<td>
+
+### 1. 홈
+
+- **사진 탐색 시작**을 누르면 바로 정리를 시작합니다.
+- 지금까지 **본 사진** 수와 **휴지통**에 모인 사진 수를 한눈에 볼 수 있어요.
+- 오른쪽 위 ⚙️ **설정**에서 본 사진 기록을 초기화하거나 사진 접근 권한을 바꿀 수 있고, ❓ **사용법**에서 동작을 다시 확인할 수 있어요.
+
+</td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/ko-02-review.png" width="240" alt="사진 리뷰 화면"></td>
+<td>
+
+### 2. 넘기면서 정리하기
+
+- 사진을 **좌우로 밀거나** 아래 버튼을 눌러 정리합니다. 미는 방향에 따라 "좋아요" / "휴지통" 표시가 점점 진해져요.
+- 위쪽 **진행 막대**로 몇 장 남았는지 확인하고, 사진 왼쪽 아래에서 **찍은 날짜**를 볼 수 있어요.
+- 이미 즐겨찾기에 있는 사진은 왼쪽 위에 **하트 배지**가 붙어요.
+- 다음 사진이 카드 뒤에 미리 준비되어 있어서, 넘기는 순간 바로 선명하게 보여요.
+- **이전**으로 돌아가거나 **5장 건너뛰기**로 빠르게 넘길 수 있고, 오른쪽 위 버튼으로 사진을 **공유**할 수 있어요.
+
+</td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/ko-03-undo.png" width="240" alt="실행 취소"></td>
+<td>
+
+### 3. 실수해도 괜찮아요
+
+- 휴지통으로 보낸 직후 아래에 **실행 취소**가 잠시 나타납니다. 누르면 사진이 원래 자리로 돌아와요.
+- 놓쳤더라도 휴지통 화면에서 언제든 복원할 수 있어요.
+
+</td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/ko-04-filters.png" width="240" alt="필터 선택"></td>
+<td>
+
+### 4. 오늘은 어떤 사진을 정리할까요?
+
+왼쪽 위 필터 버튼으로 정리할 사진을 고릅니다.
+
+- **랜덤 100장** — 부담 없이 조금씩 (기본)
+- **랜덤 1개월** — 잊고 있던 한 달을 꺼내 보기
+- **N년 전 오늘** (±15일) — 그날의 추억을 다시 보며 정리
+- **최근 7일 / 30일**, **원하는 달 선택**
+- **인물 사진**, **즐겨찾기 안 된 사진**, **스크린샷**, **연사**
+- **기기에 있는 사진만 보기** — iCloud에서 받아야 하는 사진은 건너뛰어 기다림 없이 보기
+- **안 본 사진만 보기** — 한 번 넘긴 사진은 다시 나오지 않게
+
+</td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/ko-05-trash.png" width="240" alt="휴지통"></td>
+<td>
+
+### 5. 휴지통에서 마지막 확인
+
+- 왼쪽으로 민 사진은 여기 모입니다. 아직 사진첩에서 지워지지 않았어요.
+- 사진을 **탭하거나 길게 눌러 복원**할 수 있어요.
+- **휴지통 비우기**를 누르면 시스템 확인 창이 뜨고, 확인하면 '사진' 앱의 **최근 삭제된 항목**으로 이동해 30일 동안 한 번 더 되살릴 수 있어요.
+
+</td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/ko-06-guide.png" width="240" alt="사용법"></td>
+<td>
+
+### 6. 사용법
+
+- 홈의 ❓ 버튼에서 스와이프 동작과 휴지통 규칙을 언제든 다시 볼 수 있어요.
+
+</td>
+</tr>
+</table>
+
+## iCloud 사진도 빠르게
+
+'iPhone 저장 공간 최적화'를 쓰면 원본이 iCloud에만 있는 사진이 많아서, 보통은 사진이 선명해질 때까지 기다려야 합니다. mind PIC은 이렇게 기다림을 줄여요.
+
+- **기기에 있는 사진 먼저**: 앞으로 볼 사진 중 기기에 있는 사진을 앞으로 당겨 보여줍니다. 랜덤 100장에서는 iCloud에만 있는 사진을 기기에 있는 다른 사진으로 바꿔 넣어요.
+- **미리 받아 두기**: 기기에 있는 사진을 보는 동안 iCloud 사진을 미리 받아 둡니다. 셀룰러·저데이터 모드·저전력 모드에서는 데이터와 배터리를 아끼려고 미리 받지 않아요.
+- **진행률 표시**: 받는 중인 사진은 오른쪽 위에 진행률이 보이고, 실패하면 **다시 시도**할 수 있어요.
+- **기기에 있는 사진만 보기**: 필터에서 켜면 iCloud 사진을 아예 건너뛰어요.
+
+## 개인정보
+
+- 회원가입·로그인 없음
+- 광고, 분석·추적 도구 없음
+- 모든 사진은 기기 안에서만 처리되며 어디에도 전송되지 않습니다 ([개인정보처리방침](docs/privacy-policy.md))
+
+한국어 / 영어를 지원하고, Dynamic Type(큰 글씨)과 VoiceOver를 지원합니다.
+
+---
+
+## 개발
+
+### 요구 사항
 
 - iPhone, iOS 17.0 이상
 - 개발: Xcode 16 이상
 
-## 빌드
+### 빌드
 
 ```bash
 git clone https://github.com/minD3D/mindPic.git
@@ -34,7 +140,7 @@ open mindPic/mindPIC.xcodeproj
 2. `mindPIC` 스킴으로 실행(⌘R), 테스트(⌘U)합니다.
 3. 시뮬레이터에서는 사진 앱에 사진을 드래그해 넣어 테스트할 수 있습니다.
 
-## App Store 스크린샷
+### App Store 스크린샷
 
 ```bash
 scripts/take-screenshots.sh ~/Pictures/샘플사진   # 사진 폴더는 처음 한 번만
@@ -42,21 +148,26 @@ scripts/take-screenshots.sh ~/Pictures/샘플사진   # 사진 폴더는 처음 
 
 시뮬레이터(기본 iPhone 17 Pro Max, 6.9인치)에 사진 접근을 미리 허용하고 상태바를 정리한 뒤, 한국어/영어로 홈·리뷰·실행 취소·필터·휴지통·사용법 화면을 촬영해 `screenshots/`에 저장합니다. 제출용 최신본은 `docs/screenshots/`에 있습니다. (`DEVICE`, `LANGS`, `OUT_DIR` 환경 변수로 변경 가능)
 
-## 구조
+### 로딩 성능 확인
+
+실제 기기에서 사진이 선명해질 때까지 걸린 시간과 기기/iCloud 사진 수를 로그로 남깁니다. 아이폰을 Mac에 연결하고 **콘솔** 앱에서 기기를 선택한 뒤 `subsystem:mind3d.mindPIC`로 걸러 보세요.
+
+### 구조
 
 ```
 mindPIC/
 ├── MindPICApp.swift            앱 진입점
 ├── ContentView.swift           스플래시 → 홈
-├── HomeView.swift              홈 화면
+├── HomeView.swift              홈 화면 (본 사진 / 휴지통 수)
 ├── HomeSheets.swift            설정 / 사용법 시트
-├── PhotoReviewView.swift       스와이프 리뷰 화면, 필터 시트
-├── PhotoReviewViewModel.swift  필터별 사진 조회(백그라운드), 이동/좋아요/삭제/실행 취소, 프리히팅
+├── PhotoReviewView.swift       스와이프 리뷰 화면 (카드 스택), 필터 시트
+├── PhotoReviewViewModel.swift  필터별 사진 조회(백그라운드), 이동/좋아요/삭제/실행 취소,
+│                               기기 사진 우선 정렬, 프리히팅
 ├── TrashView.swift             휴지통 (복원, 비우기)
-├── AssetImageView.swift        썸네일 → 고해상도 단계 로딩
+├── AssetImageView.swift        미리보기 → 고해상도 로딩, iCloud 진행률 / 실패 처리
 ├── ReviewStateStore.swift      본 사진 / 휴지통 ID 저장 (UserDefaults)
 ├── PhotoModels.swift           PhotoItem, PhotoFilterType
-├── PhotoHelpers.swift          권한 요청, 이미지 요청 스펙
+├── PhotoHelpers.swift          권한 요청, 이미지 요청 스펙, 네트워크 상태, 로딩 로그
 ├── Theme.swift                 색상, 폰트, 공통 컴포넌트
 ├── Localizable.xcstrings       화면 문구 (ko, en)
 ├── InfoPlist.xcstrings         권한 안내 문구 (ko, en)
@@ -65,9 +176,9 @@ mindPIC/
 
 - **UI**: SwiftUI
 - **사진**: PhotoKit (`PHAsset`, `PHCachingImageManager`)
-- **테스트**: Swift Testing (`mindPICTests`)
+- **테스트**: Swift Testing (`mindPICTests`), XCTest UI 테스트 (`mindPICUITests`)
 
-## 출시
+### 출시
 
 ```bash
 scripts/release.sh   # 단위 테스트 → Archive → App Store Connect 업로드
@@ -89,12 +200,29 @@ App Store Connect 입력값과 순서는 [출시 체크리스트](docs/release-c
 
 # mind PIC (English)
 
-**Swipe through your camera roll and clean it up fast.** An iOS app for reviewing photos one at a time: swipe right to favorite, swipe left to trash (with undo), tap to keep.
+**Swipe through your camera roll and clean it up fast.** Review your photos one at a time and decide what to keep and what to let go. Trashed photos aren't deleted right away — they wait in the in-app trash so you can check them one last time.
 
-- Filters: random 100, random month, on this day N years ago, last 7/30 days, any month, screenshots, bursts, portraits, non-favorites
-- Safe deletion: review and restore from the in-app trash; emptying it moves photos to "Recently Deleted" (kept for 30 days)
-- Private by design: everything runs on-device — no account, server, ads, or analytics
-- Korean and English, Dynamic Type, VoiceOver labels
-- Requires iPhone with iOS 17.0+; built with SwiftUI and PhotoKit
+<p align="center">
+  <img src="docs/screenshots/en-01-home.png" width="200" alt="Home">
+  <img src="docs/screenshots/en-02-review.png" width="200" alt="Reviewing photos">
+  <img src="docs/screenshots/en-05-trash.png" width="200" alt="Trash">
+</p>
+
+| Gesture | Result |
+|---|---|
+| 👉 Swipe right | **Like** — adds to Favorites in the Photos app |
+| 👈 Swipe left | **Trash** — moves to the in-app trash (undo right away) |
+| 👆 Tap | **Keep** — leave it and see the next photo |
+
+Prefer buttons? **Trash · Keep · Like** sit right below the photo.
+
+- **Home**: see how many photos you've reviewed and trashed, then tap **Start Reviewing**.
+- **Review**: a progress bar shows how far you are, the capture date sits on the photo, and photos already in Favorites get a heart badge. The next photo waits behind the current card, so it's sharp the moment you swipe.
+- **Undo**: tap **Undo** right after trashing a photo, or restore it later from the trash.
+- **Filters**: Random 100, random month, on this day N years ago (±15 days), last 7/30 days, any month, portraits, not in Favorites, screenshots, bursts — plus **On-Device Photos Only** and **Unseen Only**.
+- **Trash**: tap or long-press to restore. **Empty Trash** moves photos to "Recently Deleted" in the Photos app, where they stay for 30 days.
+- **Fast with iCloud Photos**: on-device photos are shown first and iCloud-only photos are downloaded ahead of time (not on cellular, Low Data, or Low Power mode), with a progress ring and Retry if a download fails.
+- **Private by design**: no account, no ads, no analytics — everything stays on your device.
+- Korean and English, Dynamic Type, VoiceOver. Requires iPhone with iOS 17.0+; built with SwiftUI and PhotoKit.
 
 [Support & FAQ](docs/support.md#mind-pic-support-english) · [Privacy Policy](docs/privacy-policy.md#mind-pic-privacy-policy-english)
