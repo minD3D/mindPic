@@ -205,6 +205,22 @@ struct PhotoReviewView: View {
             .overlay {
                 if isTop { swipeHint }
             }
+            .overlay(alignment: .topLeading) {
+                // 이미 좋아요(즐겨찾기)한 사진 표시. 스와이프 중에는 좋아요/휴지통 힌트와 겹치지 않게 숨긴다.
+                if vm.isLiked(item) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 34, height: 34)
+                        .background(AppTheme.like, in: Circle())
+                        .overlay(Circle().stroke(.white.opacity(0.8), lineWidth: 1.5))
+                        .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                        .padding(14)
+                        .opacity(isTop && dragOffset != .zero ? 0 : 1)
+                        .allowsHitTesting(false)
+                        .accessibilityLabel(Text("좋아요한 사진"))
+                }
+            }
             .overlay(alignment: .bottomLeading) {
                 if isTop, let date = vm.currentDateString {
                     Label(date, systemImage: "calendar")
