@@ -27,6 +27,7 @@ struct SettingsSheet: View {
                     Button("사진 접근 권한 변경") { openAppSettings() }
                 }
             }
+            .appFormStyle()
             .navigationTitle("설정")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -81,6 +82,7 @@ struct InfoSheet: View {
                     }
                 }
             }
+            .appFormStyle()
             .navigationTitle("사용법")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -96,9 +98,10 @@ struct InfoSheet: View {
     private func guideRow(_ systemImage: String, _ title: LocalizedStringKey, _ detail: LocalizedStringKey) -> some View {
         HStack(spacing: 14) {
             Image(systemName: systemImage)
-                .font(.title3)
-                .foregroundColor(AppTheme.accentDark)
-                .frame(width: 28)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(AppTheme.accent)
+                .frame(width: 34, height: 34)
+                .background(AppTheme.accentSoft, in: Circle())
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(AppFont.body.weight(.semibold))

@@ -104,7 +104,7 @@ final class PhotoReviewViewModel: ObservableObject {
         } else {
             isIncluded = { !trashed.contains($0) && !seen.contains($0) }
         }
-
+        
         Task {
             let items = await Task.detached(priority: .userInitiated) {
                 PhotoReviewViewModel.fetchItems(for: filter, trashedIDs: trashed, isIncluded: isIncluded)
