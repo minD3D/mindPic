@@ -47,14 +47,14 @@ struct PhotoReviewView: View {
                 VStack(spacing: 12) {
                     HStack {
                         Button { showFilterSheet = true } label: {
-                            AppChip(text: filterChipText, systemImage: "line.3.horizontal.decrease.circle")
+                            AppChip(text: Text(verbatim: filterChipText), systemImage: "line.3.horizontal.decrease.circle")
                         }
                         .accessibilityHint("필터를 바꿉니다")
 
                         Spacer()
 
                         Button { loadImageForShare() } label: {
-                            AppChip(text: "공유", systemImage: "square.and.arrow.up")
+                            AppChip(text: Text("공유"), systemImage: "square.and.arrow.up")
                         }
                         .disabled(vm.currentPhoto == nil)
                     }
@@ -77,7 +77,7 @@ struct PhotoReviewView: View {
                             .frame(maxHeight: .infinity)
 
                     } else if let current = vm.currentPhoto {
-                        Text("\(vm.currentIndex+1) / \(vm.photos.count)")
+                        Text(verbatim: "\(vm.currentIndex+1) / \(vm.photos.count)")
                             .font(AppFont.buttonSmall)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
@@ -238,7 +238,7 @@ struct PhotoReviewView: View {
     }
 
     private var filterChipText: String {
-        vm.onlyUnseen ? "\(vm.filterType.title) · 안 본 사진" : vm.filterType.title
+        vm.onlyUnseen ? String(localized: "\(vm.filterType.title) · 안 본 사진") : vm.filterType.title
     }
 
     // MARK: - 하위 View
@@ -253,7 +253,8 @@ struct PhotoReviewView: View {
             RoundedRectangle(cornerRadius: 24)
                 .fill(color.opacity(0.18 * progress))
 
-            Label(isLike ? "좋아요" : "휴지통", systemImage: isLike ? "heart.fill" : "trash.fill")
+            Label(isLike ? LocalizedStringKey("좋아요") : LocalizedStringKey("휴지통"),
+                  systemImage: isLike ? "heart.fill" : "trash.fill")
                 .font(AppFont.button)
                 .foregroundColor(.white)
                 .padding(.horizontal, 14)
@@ -270,7 +271,8 @@ struct PhotoReviewView: View {
             Image(systemName: "photo.on.rectangle.angled")
                 .font(.system(size: 40))
                 .foregroundColor(AppTheme.textSecondary)
-            Text(vm.onlyUnseen ? "이 필터에 아직 안 본 사진이 없어요" : "이 필터에 해당하는 사진이 없어요")
+            Text(vm.onlyUnseen ? LocalizedStringKey("이 필터에 아직 안 본 사진이 없어요")
+                               : LocalizedStringKey("이 필터에 해당하는 사진이 없어요"))
                 .font(AppFont.subtitle)
                 .foregroundColor(AppTheme.textSecondary)
                 .multilineTextAlignment(.center)
@@ -304,7 +306,7 @@ struct PhotoReviewView: View {
         .shadow(color: AppTheme.shadow, radius: 8, x: 0, y: 4)
     }
 
-    private func navButton(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+    private func navButton(_ title: LocalizedStringKey, systemImage: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
                 .font(AppFont.buttonSmall)
@@ -320,7 +322,7 @@ struct PhotoReviewView: View {
         }
     }
 
-    private func actionButton(image: String, title: String, size: CGFloat,
+    private func actionButton(image: String, title: LocalizedStringKey, size: CGFloat,
                               action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 6) {
@@ -410,7 +412,7 @@ struct PhotoReviewView: View {
 
     // MARK: - 필터 시트
 
-    private func filterRow(_ title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+    private func filterRow(_ title: LocalizedStringKey, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button {
             action()
             showFilterSheet = false

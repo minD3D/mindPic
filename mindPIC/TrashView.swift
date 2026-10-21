@@ -77,7 +77,7 @@ struct TrashView: View {
                 showEmptyAlert = true
             } label: {
                 AppButtonLabel(
-                    text: "휴지통 비우기",
+                    text: Text("휴지통 비우기"),
                     foreground: isEmptyDisabled ? AppTheme.textSecondary : .white,
                     background: isEmptyDisabled ? AppTheme.cardStrong : AppTheme.danger,
                     border: isEmptyDisabled ? AppTheme.border : nil,
@@ -88,7 +88,7 @@ struct TrashView: View {
             }
             .disabled(isEmptyDisabled)
         }
-        .navigationTitle(vm.photos.isEmpty ? "휴지통" : "휴지통 (\(vm.photos.count))")
+        .navigationTitle(vm.photos.isEmpty ? Text("휴지통") : Text("휴지통 (\(vm.photos.count))"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
         .onChange(of: scenePhase) { _, phase in

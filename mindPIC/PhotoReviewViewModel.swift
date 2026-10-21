@@ -33,7 +33,8 @@ final class PhotoReviewViewModel: ObservableObject {
 
     private static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "yyyy.MM.dd HH:mm"
+        f.dateStyle = .medium
+        f.timeStyle = .short
         return f
     }()
 

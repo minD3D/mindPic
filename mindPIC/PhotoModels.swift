@@ -30,22 +30,22 @@ enum PhotoFilterType: Equatable {
 extension PhotoFilterType {
     private static let monthFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "yyyy년 M월"
+        f.setLocalizedDateFormatFromTemplate("yMMMM")
         return f
     }()
 
     // 리뷰 화면 상단 칩에 현재 필터를 보여주기 위한 이름
     var title: String {
         switch self {
-        case .random100: return "랜덤 100장"
-        case .yearsAgo(let years): return "\(years)년 전 오늘"
+        case .random100: return String(localized: "랜덤 100장")
+        case .yearsAgo(let years): return String(localized: "\(years)년 전 오늘")
         case .monthRange(let start): return Self.monthFormatter.string(from: start)
-        case .recentDays(let days): return "최근 \(days)일"
-        case .peoplePortrait: return "인물 사진"
-        case .nonFavorite: return "즐겨찾기 안 된 사진"
-        case .screenshot: return "스크린샷"
-        case .burst: return "연사"
-        case .trash: return "휴지통"
+        case .recentDays(let days): return String(localized: "최근 \(days)일")
+        case .peoplePortrait: return String(localized: "인물 사진")
+        case .nonFavorite: return String(localized: "즐겨찾기 안 된 사진")
+        case .screenshot: return String(localized: "스크린샷")
+        case .burst: return String(localized: "연사")
+        case .trash: return String(localized: "휴지통")
         }
     }
 }

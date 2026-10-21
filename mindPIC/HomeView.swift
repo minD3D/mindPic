@@ -31,7 +31,7 @@ struct HomeView: View {
                             PhotoReviewView()
                         } label: {
                             AppButtonLabel(
-                                text: "사진 탐색 시작",
+                                text: Text("사진 탐색 시작"),
                                 foreground: .white,
                                 background: AppTheme.accentDark,
                                 border: nil,
@@ -43,7 +43,7 @@ struct HomeView: View {
                             TrashView()
                         } label: {
                             AppButtonLabel(
-                                text: trashCount > 0 ? "휴지통 보기 (\(trashCount))" : "휴지통 보기",
+                                text: trashCount > 0 ? Text("휴지통 보기 (\(trashCount))") : Text("휴지통 보기"),
                                 foreground: AppTheme.textPrimary,
                                 background: AppTheme.cardStrong,
                                 border: AppTheme.border,

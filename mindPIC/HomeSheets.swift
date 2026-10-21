@@ -91,7 +91,7 @@ struct InfoSheet: View {
         .tint(AppTheme.accentDark)
     }
 
-    private func guideRow(_ systemImage: String, _ title: String, _ detail: String) -> some View {
+    private func guideRow(_ systemImage: String, _ title: LocalizedStringKey, _ detail: LocalizedStringKey) -> some View {
         HStack(spacing: 14) {
             Image(systemName: systemImage)
                 .font(.title3)

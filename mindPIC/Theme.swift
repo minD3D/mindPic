@@ -50,14 +50,14 @@ struct AppBackground: View {
 }
 
 struct AppButtonLabel: View {
-    let text: String
+    let text: Text
     let foreground: Color
     let background: Color
     let border: Color?
     let shadow: Bool
 
     var body: some View {
-        Text(text)
+        text
             .font(AppFont.button)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
@@ -73,11 +73,11 @@ struct AppButtonLabel: View {
 }
 
 struct AppChip: View {
-    let text: String
+    let text: Text
     let systemImage: String
 
     var body: some View {
-        Label(text, systemImage: systemImage)
+        Label { text } icon: { Image(systemName: systemImage) }
             .font(AppFont.buttonSmall)
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
@@ -111,7 +111,7 @@ struct PhotoPermissionView: View {
 
             Button { openAppSettings() } label: {
                 AppButtonLabel(
-                    text: "설정 열기",
+                    text: Text("설정 열기"),
                     foreground: .white,
                     background: AppTheme.accentDark,
                     border: nil,
