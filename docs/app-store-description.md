@@ -18,6 +18,8 @@ mind PIC은 사진을 한 장씩 넘기면서 남길 사진과 지울 사진을 
 · 왼쪽으로 밀기 — 휴지통으로 이동
 · 탭 — 보관하고 다음 사진으로
 · 실수로 지웠다면 바로 '실행 취소'
+· 스와이프가 어색하다면 사진 아래 휴지통 · 보관 · 좋아요 버튼으로
+· 홈 화면에서 지금까지 본 사진과 휴지통에 모인 사진 수를 한눈에
 
 ■ 오늘은 어떤 사진을 정리할까요?
 · 랜덤 100장 — 부담 없이 조금씩
@@ -49,7 +51,7 @@ mind PIC은 사진을 한 장씩 넘기면서 남길 사진과 지울 사진을 
 
 ## 앱 심사 정보 메모 (App Review Information)
 This app helps users review and clean up their photo library. It requires photo library access ("Full Access" recommended) to function. All processing happens on-device; no data is collected or transmitted.
-How to test: Tap "사진 탐색 시작" → allow photo access → swipe right to favorite, swipe left to move to the in-app trash, tap to keep. Deleting from the in-app trash ("휴지통 비우기") calls PhotoKit deletion, which shows the system confirmation dialog.
+How to test: Tap "Start Reviewing" ("사진 탐색 시작") → allow photo access → swipe right to favorite, swipe left to move to the in-app trash, tap to keep. Deleting from the in-app trash ("View Trash" → "Empty Trash" / "휴지통 비우기") calls PhotoKit deletion, which shows the system confirmation dialog.
 
 ## 앱 개인정보 보호 (App Privacy)
 - "데이터를 수집하지 않음(Data Not Collected)" 선택
