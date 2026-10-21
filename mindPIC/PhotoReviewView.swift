@@ -50,6 +50,7 @@ struct PhotoReviewView: View {
                             AppChip(text: Text(verbatim: filterChipText), systemImage: "line.3.horizontal.decrease.circle")
                         }
                         .accessibilityHint("필터를 바꿉니다")
+                        .accessibilityIdentifier("review.filter")
 
                         Spacer()
 
@@ -167,16 +168,19 @@ struct PhotoReviewView: View {
                                 performDelete()
                             }
                             .accessibilityLabel("휴지통으로 이동")
+                            .accessibilityIdentifier("review.delete")
 
                             actionButton(image: "icon_next_3d", title: "보관", size: 72) {
                                 vm.keep()
                             }
                             .accessibilityLabel("보관하고 다음 사진")
+                            .accessibilityIdentifier("review.keep")
 
                             actionButton(image: "icon_heart_3d", title: "좋아요", size: 64) {
                                 performLike()
                             }
                             .accessibilityLabel("좋아요")
+                            .accessibilityIdentifier("review.like")
                         }
                         .padding(.bottom, 20)
 
@@ -298,6 +302,7 @@ struct PhotoReviewView: View {
                 }
             }
             .font(AppFont.buttonSmall.weight(.bold))
+            .accessibilityIdentifier("review.undo")
             .foregroundColor(AppTheme.accent)
         }
         .padding(.horizontal, 18)
@@ -504,6 +509,7 @@ struct PhotoReviewView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("닫기") { showFilterSheet = false }
+                        .accessibilityIdentifier("sheet.close")
                 }
             }
         }

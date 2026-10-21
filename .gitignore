@@ -7,3 +7,6 @@ build/
 
 # macOS
 .DS_Store
+
+# App Store 스크린샷 (scripts/take-screenshots.sh)
+screenshots/

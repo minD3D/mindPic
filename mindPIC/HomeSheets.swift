@@ -32,6 +32,7 @@ struct SettingsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("닫기") { dismiss() }
+                        .accessibilityIdentifier("sheet.close")
                 }
             }
             .alert("본 사진 기록을 초기화할까요?", isPresented: $showResetAlert) {
@@ -85,6 +86,7 @@ struct InfoSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("닫기") { dismiss() }
+                        .accessibilityIdentifier("sheet.close")
                 }
             }
         }

@@ -38,6 +38,7 @@ struct HomeView: View {
                                 shadow: true
                             )
                         }
+                        .accessibilityIdentifier("home.start")
 
                         NavigationLink {
                             TrashView()
@@ -50,6 +51,7 @@ struct HomeView: View {
                                 shadow: false
                             )
                         }
+                        .accessibilityIdentifier("home.trash")
                     }
 
                     Spacer()
@@ -60,6 +62,7 @@ struct HomeView: View {
                         } label: {
                             Label("설정", systemImage: "gear")
                         }
+                        .accessibilityIdentifier("home.settings")
 
                         Spacer()
 
@@ -68,6 +71,7 @@ struct HomeView: View {
                         } label: {
                             Label("사용법", systemImage: "info.circle")
                         }
+                        .accessibilityIdentifier("home.info")
                     }
                     .font(AppFont.buttonSmall)
                     .foregroundColor(AppTheme.textSecondary)
