@@ -22,6 +22,16 @@ jobs:
           xcodebuild -version
           xcrun simctl list runtimes
 
+      - name: Vision taxonomy (temporary)
+        run: |
+          cat > /tmp/taxonomy.swift <<'EOF'
+          import Vision
+          let ids = try VNClassifyImageRequest().supportedIdentifiers()
+          print("TAXONOMY_COUNT \(ids.count)")
+          print("TAXONOMY " + ids.joined(separator: ","))
+          EOF
+          swift /tmp/taxonomy.swift
+
       - name: Pick iPhone simulator
         id: sim
         run: |
