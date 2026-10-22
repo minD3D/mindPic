@@ -120,3 +120,108 @@ struct AvailabilityOrderTests {
         #expect(PhotoReviewViewModel.availabilityOrder(ids: [], status: ["a": true]).isEmpty)
     }
 }
+
+struct SimilarPhotoGroupingTests {
+
+    private func dates(_ seconds: [TimeInterval]) -> [Date] {
+        seconds.map { Date(timeIntervalSince1970: $0) }
+    }
+
+    @Test func timeClustersSplitOnLargeGaps() {
+        // 0,30,60 / 1000 (혼자) / 5000,5100
+        let clusters = SimilarPhotoGrouping.timeClusters(dates: dates([0, 30, 60, 1000, 5000, 5100]), maxGap: 120)
+        #expect(clusters == [0..<3, 4..<6])
+    }
+
+    @Test func timeClustersWorkNewestFirst() {
+        let clusters = SimilarPhotoGrouping.timeClusters(dates: dates([5100, 5000, 1000, 60, 30, 0]), maxGap: 120)
+        #expect(clusters == [0..<2, 3..<6])
+    }
+
+    @Test func timeClustersIgnoreSinglePhotos() {
+        #expect(SimilarPhotoGrouping.timeClusters(dates: dates([0, 500, 1000]), maxGap: 120).isEmpty)
+        #expect(SimilarPhotoGrouping.timeClusters(dates: dates([0]), maxGap: 120).isEmpty)
+        #expect(SimilarPhotoGrouping.timeClusters(dates: [], maxGap: 120).isEmpty)
+    }
+
+    @Test func groupsAreTransitive() {
+        // 0~1, 1~2 → {0,1,2}, 3과 4는 따로, 4~5 → {4,5}
+        let similar: Set<[Int]> = [[0, 1], [1, 2], [4, 5]]
+        let groups = SimilarPhotoGrouping.groups(count: 6, maxNeighbors: 10) { similar.contains([$0, $1]) }
+        #expect(groups == [[0, 1, 2], [4, 5]])
+    }
+
+    @Test func groupsOnlyCompareNearbyNeighbors() {
+        // 0과 3이 비슷해도 maxNeighbors가 2면 비교하지 않는다.
+        let groups = SimilarPhotoGrouping.groups(count: 4, maxNeighbors: 2) { $0 == 0 && $1 == 3 }
+        #expect(groups.isEmpty)
+    }
+
+    @Test func bestIndexPicksHighestScore() {
+        #expect(SimilarPhotoGrouping.bestIndex(scores: [0.2, 0.9, 0.5], favorites: [false, false, false]) == 1)
+    }
+
+    @Test func bestIndexPrefersFavorites() {
+        #expect(SimilarPhotoGrouping.bestIndex(scores: [0.2, 0.9, 0.5], favorites: [true, false, true]) == 2)
+    }
+
+    @Test func bestIndexBreaksTiesWithFirst() {
+        #expect(SimilarPhotoGrouping.bestIndex(scores: [0.5, 0.5, 0.1], favorites: [false, false, false]) == 0)
+    }
+}
+
+struct ReviewStateStoreBatchTests {
+
+    @Test func addAllToTrashAndMarkAllSeenPersist() {
+        let suite = "mindPICTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let store = ReviewStateStore(defaults: defaults)
+        store.addAllToTrash(["a", "b"])
+        store.markAllSeen(["a", "b", "c"])
+
+        let reloaded = ReviewStateStore(defaults: defaults)
+        #expect(reloaded.trashedIDs == ["a", "b"])
+        #expect(reloaded.seenIDs == ["a", "b", "c"])
+    }
+}
+
+struct CleanupRulesTests {
+
+    private func metrics(brightness: Double = 0.5, sharpness: Double? = nil, aesthetic: Double? = nil,
+                         utility: Bool = false, screenshot: Bool = false) -> PhotoMetrics {
+        PhotoMetrics(brightness: brightness, sharpness: sharpness, aestheticScore: aesthetic,
+                     isUtility: utility, isScreenshot: screenshot)
+    }
+
+    @Test func normalPhotoIsNotSuggested() {
+        #expect(CleanupRules.reasons(for: metrics(sharpness: 0.1)).isEmpty)
+        #expect(CleanupRules.reasons(for: metrics(aesthetic: 0.4)).isEmpty)
+    }
+
+    @Test func darkAndBrightPhotos() {
+        #expect(CleanupRules.reasons(for: metrics(brightness: 0.02, sharpness: 0.1)) == [.dark])
+        #expect(CleanupRules.reasons(for: metrics(brightness: 0.98, sharpness: 0.1)) == [.bright])
+    }
+
+    @Test func blurryOnlyWithoutAestheticScore() {
+        #expect(CleanupRules.reasons(for: metrics(sharpness: 0.005)) == [.blurry])
+        // iOS 18에서는 미적 점수가 흐림까지 반영하므로 선명도를 보지 않는다.
+        #expect(CleanupRules.reasons(for: metrics(sharpness: 0.005, aesthetic: 0.4)).isEmpty)
+    }
+
+    @Test func darkPhotoIsNotAlsoBlurry() {
+        #expect(CleanupRules.reasons(for: metrics(brightness: 0.03, sharpness: 0.001)) == [.dark])
+    }
+
+    @Test func lowQualityFromAestheticScore() {
+        #expect(CleanupRules.reasons(for: metrics(aesthetic: -0.6)) == [.lowQuality])
+    }
+
+    @Test func utilityAndScreenshotGetOneMainReason() {
+        #expect(CleanupRules.reasons(for: metrics(aesthetic: -0.8, utility: true)) == [.utility])
+        #expect(CleanupRules.reasons(for: metrics(aesthetic: -0.8, utility: true, screenshot: true)) == [.screenshot])
+        #expect(CleanupRules.reasons(for: metrics(sharpness: 0.001, screenshot: true)) == [.screenshot])
+    }
+}

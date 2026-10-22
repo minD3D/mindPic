@@ -1,0 +1,54 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes
+
+      - name: Pick iPhone simulator
+        id: sim
+        run: |
+          UDID="$(xcrun simctl list devices available | grep -E '^\s+iPhone' | grep -m1 -oE '[0-9A-F]{8}-([0-9A-F]{4}-){3}[0-9A-F]{12}')"
+          echo "Using $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      # 서명 없이 시뮬레이터용으로 빌드하고 단위 테스트를 돌린다.
+      - name: Build and unit test
+        run: |
+          status=0
+          xcodebuild test \
+            -project mindPIC.xcodeproj \
+            -scheme mindPIC \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -only-testing:mindPICTests \
+            CODE_SIGNING_ALLOWED=NO \
+            > xcodebuild.log 2>&1 || status=$?
+          grep -E "error:|Test .*(passed|failed)|\*\* (BUILD|TEST)" xcodebuild.log || true
+          exit $status
+
+      - name: Show errors
+        if: failure()
+        run: grep -E "error:" -A3 xcodebuild.log | head -200 || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: xcodebuild-log
+          path: xcodebuild.log

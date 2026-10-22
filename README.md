@@ -108,6 +108,33 @@
 </tr>
 </table>
 
+## 비슷한 사진 정리
+
+홈의 **비슷한 사진**에서 연달아 찍은 비슷한 사진을 묶어 보여줍니다.
+
+- 묶음마다 가장 잘 나온 사진에 **추천** 표시가 붙고, 처음에는 추천 사진만 남기도록 선택돼 있어요. 탭해서 남길 사진을 바꿀 수 있어요.
+- **N장 휴지통으로** 한 번이면 묶음 정리 끝. 바로 **실행 취소**할 수 있고, 앱 휴지통을 거치니 실제 삭제 전에 다시 확인할 수 있어요.
+- 추천 기준: 즐겨찾기한 사진 우선 → iOS 18 이상은 Apple의 사진 미적 점수, iOS 17은 얼굴 품질(얼굴이 있을 때)이나 선명도
+- 기간은 최근 1개월 / 최근 1년 / 전체 중에서 고르고, 찾는 대로 바로 보여줘요.
+- **모든 분석은 기기 안에서** Apple Vision 프레임워크로 처리합니다. 사진이 밖으로 나가지 않아요.
+
+## 정리 추천
+
+홈의 **정리 추천**에서 지울 만한 사진을 골라 보여줍니다. 즐겨찾기한 사진은 추천하지 않아요.
+
+| 이유 | 기준 |
+|---|---|
+| 아쉬운 사진 | Apple의 사진 미적 점수가 낮음 (iOS 18 이상) |
+| 흐림 | 윤곽선이 약함 — 흔들리거나 초점이 나감 (iOS 17) |
+| 어두움 / 너무 밝음 | 평균 밝기가 아주 낮거나 높음 — 주머니 속, 실수로 찍힌 사진 |
+| 기록용 | 영수증·문서·메모처럼 기록용으로 찍은 사진 (iOS 18 이상) |
+| 스크린샷 | 스크린샷 |
+
+- 추천된 사진은 처음부터 선택돼 있어요. 남길 사진만 탭해서 빼고 **N장 휴지통으로**를 누르면 끝. 바로 **실행 취소**할 수 있어요.
+- 위쪽 칩으로 이유별로 걸러 볼 수 있고, 길게 누르면 크게 볼 수 있어요.
+- 기준값은 `CleanupSuggestions.swift`의 `CleanupRules`에서 조정할 수 있어요.
+- 비슷한 사진 정리와 마찬가지로 **모든 분석은 기기 안에서** 처리합니다.
+
 ## iCloud 사진도 빠르게
 
 'iPhone 저장 공간 최적화'를 쓰면 원본이 iCloud에만 있는 사진이 많아서, 보통은 사진이 선명해질 때까지 기다려야 합니다. mind PIC은 이렇게 기다림을 줄여요.
@@ -169,6 +196,14 @@ mindPIC/
 ├── PhotoReviewViewModel.swift  필터별 사진 조회(백그라운드), 이동/좋아요/삭제/실행 취소,
 │                               기기 사진 우선 정렬, 프리히팅
 ├── TrashView.swift             휴지통 (복원, 비우기)
+├── SimilarPhotosView.swift     비슷한 사진 묶음 화면
+├── SimilarPhotosViewModel.swift 분석 진행, 남길 사진 선택, 정리 / 실행 취소
+├── SimilarPhotos.swift         비슷한 사진 분석 (Vision 특징 벡터, 묶기, 추천 사진 점수)
+├── CleanupSuggestionsView.swift 정리 추천 화면 (이유별 칩, 선택, 실행 취소)
+├── CleanupSuggestionsViewModel.swift 분석 진행, 선택, 휴지통 이동 / 실행 취소
+├── CleanupSuggestions.swift    정리 추천 이유 판단 규칙, 분석기
+├── PhotoImageAnalysis.swift    사진 한 장 분석 (썸네일, 미적 점수, 얼굴 품질, 선명도, 밝기)
+├── PhotoThumbnailView.swift    정사각형 썸네일 (휴지통, 비슷한 사진, 정리 추천)
 ├── AssetImageView.swift        미리보기 → 고해상도 로딩, iCloud 진행률 / 실패 처리
 ├── ReviewStateStore.swift      본 사진 / 휴지통 ID 저장 (UserDefaults)
 ├── PhotoModels.swift           PhotoItem, PhotoFilterType
@@ -181,6 +216,7 @@ mindPIC/
 
 - **UI**: SwiftUI
 - **사진**: PhotoKit (`PHAsset`, `PHCachingImageManager`)
+- **분석**: Vision (`VNGenerateImageFeaturePrintRequest`, `VNCalculateImageAestheticsScoresRequest`, `VNDetectFaceCaptureQualityRequest`), Core Image
 - **테스트**: Swift Testing (`mindPICTests`), XCTest UI 테스트 (`mindPICUITests`)
 
 ### 출시
