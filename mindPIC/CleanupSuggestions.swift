@@ -49,7 +49,9 @@ enum CleanupRules {
     // 값이 클수록 추천이 엄격해진다(적게 나온다). 실제 사진으로 조정할 수 있다.
     static let darkBelow = 0.08
     static let brightAbove = 0.93
-    static let blurryBelow = 0.02
+    // 360px 썸네일 기준: 또렷한 사진은 0.0077 이상, 흔들리거나 초점이 나간 사진은 0.005 이하.
+    // 살짝 흐린 사진(0.007 안팎)은 매끈한 부분이 넓은 또렷한 사진과 구분되지 않아, 또렷한 사진을 추천하지 않는 쪽을 택했다.
+    static let blurryBelow = 0.006
     static let lowQualityBelow = -0.3
 
     /// 정리할 만한 이유들. 비어 있으면 추천하지 않는다. 중요한 이유가 먼저 온다.
