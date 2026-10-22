@@ -186,3 +186,42 @@ struct ReviewStateStoreBatchTests {
         #expect(reloaded.seenIDs == ["a", "b", "c"])
     }
 }
+
+struct CleanupRulesTests {
+
+    private func metrics(brightness: Double = 0.5, sharpness: Double? = nil, aesthetic: Double? = nil,
+                         utility: Bool = false, screenshot: Bool = false) -> PhotoMetrics {
+        PhotoMetrics(brightness: brightness, sharpness: sharpness, aestheticScore: aesthetic,
+                     isUtility: utility, isScreenshot: screenshot)
+    }
+
+    @Test func normalPhotoIsNotSuggested() {
+        #expect(CleanupRules.reasons(for: metrics(sharpness: 0.1)).isEmpty)
+        #expect(CleanupRules.reasons(for: metrics(aesthetic: 0.4)).isEmpty)
+    }
+
+    @Test func darkAndBrightPhotos() {
+        #expect(CleanupRules.reasons(for: metrics(brightness: 0.02, sharpness: 0.1)) == [.dark])
+        #expect(CleanupRules.reasons(for: metrics(brightness: 0.98, sharpness: 0.1)) == [.bright])
+    }
+
+    @Test func blurryOnlyWithoutAestheticScore() {
+        #expect(CleanupRules.reasons(for: metrics(sharpness: 0.005)) == [.blurry])
+        // iOS 18에서는 미적 점수가 흐림까지 반영하므로 선명도를 보지 않는다.
+        #expect(CleanupRules.reasons(for: metrics(sharpness: 0.005, aesthetic: 0.4)).isEmpty)
+    }
+
+    @Test func darkPhotoIsNotAlsoBlurry() {
+        #expect(CleanupRules.reasons(for: metrics(brightness: 0.03, sharpness: 0.001)) == [.dark])
+    }
+
+    @Test func lowQualityFromAestheticScore() {
+        #expect(CleanupRules.reasons(for: metrics(aesthetic: -0.6)) == [.lowQuality])
+    }
+
+    @Test func utilityAndScreenshotGetOneMainReason() {
+        #expect(CleanupRules.reasons(for: metrics(aesthetic: -0.8, utility: true)) == [.utility])
+        #expect(CleanupRules.reasons(for: metrics(aesthetic: -0.8, utility: true, screenshot: true)) == [.screenshot])
+        #expect(CleanupRules.reasons(for: metrics(sharpness: 0.001, screenshot: true)) == [.screenshot])
+    }
+}

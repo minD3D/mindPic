@@ -1,4 +1,3 @@
-import CoreImage
 import Foundation
 import Photos
 import UIKit
@@ -81,8 +80,6 @@ enum SimilarPhotoAnalyzer {
     static let maxNeighbors = 12
     // 특징 벡터 거리(revision 2, 0~2)가 이 값 이하면 비슷한 사진으로 본다. 작을수록 엄격하다.
     static let distanceThreshold: Float = 0.5
-    // 분석용 이미지 크기. 원본 대신 작은 이미지로 분석해야 빠르다.
-    static let analysisSide: CGFloat = 360
 
     /// since 이후(nil이면 전체) 사진을 최신순으로 분석해, 찾는 대로 묶음을 흘려보낸다.
     static func analyze(since: Date?, excluding: Set<String>) -> AsyncStream<Event> {
@@ -127,7 +124,7 @@ enum SimilarPhotoAnalyzer {
             var prints: [VNFeaturePrintObservation?] = []
             for asset in members {
                 if Task.isCancelled { return }
-                prints.append(await thumbnail(for: asset).flatMap(featurePrint))
+                prints.append(await PhotoImageAnalysis.thumbnail(for: asset).flatMap(featurePrint))
             }
 
             let groups = SimilarPhotoGrouping.groups(count: members.count, maxNeighbors: maxNeighbors) { a, b in
@@ -140,7 +137,7 @@ enum SimilarPhotoAnalyzer {
                 let groupAssets = indices.map { members[$0] }
                 // 점수용 이미지는 묶음에 든 사진만 다시 받아 메모리를 아낀다.
                 var images: [CGImage?] = []
-                for asset in groupAssets { images.append(await thumbnail(for: asset)) }
+                for asset in groupAssets { images.append(await PhotoImageAnalysis.thumbnail(for: asset)) }
 
                 let best = SimilarPhotoGrouping.bestIndex(
                     scores: qualityScores(images),
@@ -152,24 +149,6 @@ enum SimilarPhotoAnalyzer {
 
             done += range.count
             continuation.yield(.progress(done: done, total: total))
-        }
-    }
-
-    // 기기에 있는 작은 이미지만 쓴다 (iCloud에서 받지 않음).
-    private static func thumbnail(for asset: PHAsset) async -> CGImage? {
-        await withCheckedContinuation { continuation in
-            let opt = PHImageRequestOptions()
-            opt.isNetworkAccessAllowed = false
-            opt.deliveryMode = .highQualityFormat // 결과 핸들러가 한 번만 불린다
-            opt.resizeMode = .fast
-            PHImageManager.default().requestImage(
-                for: asset,
-                targetSize: CGSize(width: analysisSide, height: analysisSide),
-                contentMode: .aspectFit,
-                options: opt
-            ) { image, _ in
-                continuation.resume(returning: image?.cgImage)
-            }
         }
     }
 
@@ -195,51 +174,15 @@ enum SimilarPhotoAnalyzer {
     // iOS 18: 미적 점수 → 얼굴이 있으면 얼굴 품질 → 그 외 선명도
     private static func qualityScores(_ images: [CGImage?]) -> [Double] {
         if #available(iOS 18.0, *) {
-            let aesthetics = images.map { $0.flatMap(aestheticsScore) }
+            let aesthetics = images.map { $0.flatMap(PhotoImageAnalysis.aesthetics)?.overall }
             if aesthetics.contains(where: { $0 != nil }) {
                 return aesthetics.map { $0 ?? -.infinity }
             }
         }
-        let faces = images.map { $0.flatMap(faceQuality) }
+        let faces = images.map { $0.flatMap(PhotoImageAnalysis.faceQuality) }
         if faces.contains(where: { $0 != nil }) {
             return faces.map { $0 ?? 0 }
         }
-        return images.map { $0.map(sharpness) ?? 0 }
-    }
-
-    @available(iOS 18.0, *)
-    private static func aestheticsScore(_ image: CGImage) -> Double? {
-        let request = VNCalculateImageAestheticsScoresRequest()
-        try? VNImageRequestHandler(cgImage: image).perform([request])
-        guard let observation = request.results?.first as? VNImageAestheticsScoresObservation else { return nil }
-        return Double(observation.overallScore)
-    }
-
-    // 사진 속 얼굴들의 평균 품질 (표정, 초점, 가림). 얼굴이 없으면 nil.
-    private static func faceQuality(_ image: CGImage) -> Double? {
-        let request = VNDetectFaceCaptureQualityRequest()
-        try? VNImageRequestHandler(cgImage: image).perform([request])
-        let qualities = (request.results ?? []).compactMap { ($0 as? VNFaceObservation)?.faceCaptureQuality }
-        guard !qualities.isEmpty else { return nil }
-        return Double(qualities.reduce(0, +) / Float(qualities.count))
-    }
-
-    private static let ciContext = CIContext(options: [.workingColorSpace: NSNull()])
-
-    // 윤곽선 세기의 평균. 흔들리거나 초점이 나간 사진일수록 낮다.
-    private static func sharpness(_ image: CGImage) -> Double {
-        let input = CIImage(cgImage: image)
-        guard let edges = CIFilter(name: "CIEdges",
-                                   parameters: [kCIInputImageKey: input, kCIInputIntensityKey: 1.0])?.outputImage,
-              let average = CIFilter(name: "CIAreaAverage",
-                                     parameters: [kCIInputImageKey: edges,
-                                                  kCIInputExtentKey: CIVector(cgRect: input.extent)])?.outputImage
-        else { return 0 }
-
-        var pixel = [UInt8](repeating: 0, count: 4)
-        ciContext.render(average, toBitmap: &pixel, rowBytes: 4,
-                         bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
-                         format: .RGBA8, colorSpace: nil)
-        return Double(pixel[0]) + Double(pixel[1]) + Double(pixel[2])
+        return images.map { $0.map(PhotoImageAnalysis.sharpness) ?? 0 }
     }
 }

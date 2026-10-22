@@ -2,32 +2,33 @@ import Combine
 import Foundation
 import SwiftUI
 
-@MainActor
-final class SimilarPhotosViewModel: ObservableObject {
-    enum Scope: String, CaseIterable, Identifiable {
-        case month, year, all
+// 분석할 기간 (비슷한 사진, 정리 추천 공통)
+enum AnalysisScope: String, CaseIterable, Identifiable {
+    case month, year, all
 
-        var id: Self { self }
+    var id: Self { self }
 
-        var title: LocalizedStringKey {
-            switch self {
-            case .month: return "최근 1개월"
-            case .year: return "최근 1년"
-            case .all: return "전체"
-            }
-        }
-
-        var since: Date? {
-            let cal = Calendar.current
-            switch self {
-            case .month: return cal.date(byAdding: .month, value: -1, to: Date())
-            case .year: return cal.date(byAdding: .year, value: -1, to: Date())
-            case .all: return nil
-            }
+    var title: LocalizedStringKey {
+        switch self {
+        case .month: return "최근 1개월"
+        case .year: return "최근 1년"
+        case .all: return "전체"
         }
     }
 
-    @Published var scope: Scope = .year
+    var since: Date? {
+        let cal = Calendar.current
+        switch self {
+        case .month: return cal.date(byAdding: .month, value: -1, to: Date())
+        case .year: return cal.date(byAdding: .year, value: -1, to: Date())
+        case .all: return nil
+        }
+    }
+}
+
+@MainActor
+final class SimilarPhotosViewModel: ObservableObject {
+    @Published var scope: AnalysisScope = .year
     @Published private(set) var groups: [SimilarGroup] = []
     @Published private(set) var isAnalyzing = false
     @Published private(set) var analyzedCount = 0

@@ -77,19 +77,36 @@ struct HomeView: View {
                         }
                         .accessibilityIdentifier("home.start")
 
-                        NavigationLink {
-                            SimilarPhotosView()
-                        } label: {
-                            AppButtonLabel(
-                                text: Text("비슷한 사진 정리"),
-                                systemImage: "square.on.square",
-                                foreground: AppTheme.textPrimary,
-                                background: AppTheme.surface,
-                                border: AppTheme.border,
-                                shadow: false
-                            )
+                        // 기기 안에서 분석해 정리할 사진을 골라 주는 기능들
+                        HStack(spacing: 10) {
+                            NavigationLink {
+                                SimilarPhotosView()
+                            } label: {
+                                AppButtonLabel(
+                                    text: Text("비슷한 사진"),
+                                    systemImage: "square.on.square",
+                                    foreground: AppTheme.textPrimary,
+                                    background: AppTheme.surface,
+                                    border: AppTheme.border,
+                                    shadow: false
+                                )
+                            }
+                            .accessibilityIdentifier("home.similar")
+
+                            NavigationLink {
+                                CleanupSuggestionsView()
+                            } label: {
+                                AppButtonLabel(
+                                    text: Text("정리 추천"),
+                                    systemImage: "sparkles",
+                                    foreground: AppTheme.textPrimary,
+                                    background: AppTheme.surface,
+                                    border: AppTheme.border,
+                                    shadow: false
+                                )
+                            }
+                            .accessibilityIdentifier("home.suggestions")
                         }
-                        .accessibilityIdentifier("home.similar")
 
                         NavigationLink {
                             TrashView()

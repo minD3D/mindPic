@@ -66,7 +66,7 @@ struct SimilarPhotosView: View {
     private var content: some View {
         VStack(spacing: 12) {
             Picker("기간", selection: $vm.scope) {
-                ForEach(SimilarPhotosViewModel.Scope.allCases) { scope in
+                ForEach(AnalysisScope.allCases) { scope in
                     Text(scope.title).tag(scope)
                 }
             }
