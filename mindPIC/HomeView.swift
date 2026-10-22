@@ -78,6 +78,20 @@ struct HomeView: View {
                         .accessibilityIdentifier("home.start")
 
                         NavigationLink {
+                            SimilarPhotosView()
+                        } label: {
+                            AppButtonLabel(
+                                text: Text("비슷한 사진 정리"),
+                                systemImage: "square.on.square",
+                                foreground: AppTheme.textPrimary,
+                                background: AppTheme.surface,
+                                border: AppTheme.border,
+                                shadow: false
+                            )
+                        }
+                        .accessibilityIdentifier("home.similar")
+
+                        NavigationLink {
                             TrashView()
                         } label: {
                             AppButtonLabel(

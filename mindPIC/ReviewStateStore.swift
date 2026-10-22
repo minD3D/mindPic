@@ -59,6 +59,21 @@ final class ReviewStateStore {
         save(trashedIDs, forKey: Self.trashedKey)
     }
 
+    // 여러 장을 한 번에 넣을 때 (저장도 한 번만)
+    func addAllToTrash(_ ids: Set<String>) {
+        let before = trashedIDs.count
+        trashedIDs.formUnion(ids)
+        guard trashedIDs.count != before else { return }
+        save(trashedIDs, forKey: Self.trashedKey)
+    }
+
+    func markAllSeen(_ ids: Set<String>) {
+        let before = seenIDs.count
+        seenIDs.formUnion(ids)
+        guard seenIDs.count != before else { return }
+        save(seenIDs, forKey: Self.seenKey)
+    }
+
     func removeFromTrash(_ ids: Set<String>) {
         let before = trashedIDs.count
         trashedIDs.subtract(ids)

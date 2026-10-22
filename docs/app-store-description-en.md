@@ -30,6 +30,11 @@ mind PIC lets you swipe through your photos one at a time and quickly decide wha
 · Only screenshots, bursts, portraits, or photos not in Favorites
 · Unseen only — skip photos you've already reviewed
 
+■ SIMILAR SHOTS, SORTED
+· Automatically groups similar photos taken back to back
+· Marks the best shot in each group — clean up the rest with one tap
+· All analysis happens on your device — your photos never leave it
+
 ■ DELETE WITH CONFIDENCE
 Photos you swipe away aren't deleted right away. They go to the in-app trash, where you can look them over again and restore anything you want.
 When you empty the trash, photos move to "Recently Deleted" in the Photos app, so you still have 30 days to recover them.

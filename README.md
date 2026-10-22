@@ -108,6 +108,16 @@
 </tr>
 </table>
 
+## 비슷한 사진 정리
+
+홈의 **비슷한 사진 정리**에서 연달아 찍은 비슷한 사진을 묶어 보여줍니다.
+
+- 묶음마다 가장 잘 나온 사진에 **추천** 표시가 붙고, 처음에는 추천 사진만 남기도록 선택돼 있어요. 탭해서 남길 사진을 바꿀 수 있어요.
+- **N장 휴지통으로** 한 번이면 묶음 정리 끝. 바로 **실행 취소**할 수 있고, 앱 휴지통을 거치니 실제 삭제 전에 다시 확인할 수 있어요.
+- 추천 기준: 즐겨찾기한 사진 우선 → iOS 18 이상은 Apple의 사진 미적 점수, iOS 17은 얼굴 품질(얼굴이 있을 때)이나 선명도
+- 기간은 최근 1개월 / 최근 1년 / 전체 중에서 고르고, 찾는 대로 바로 보여줘요.
+- **모든 분석은 기기 안에서** Apple Vision 프레임워크로 처리합니다. 사진이 밖으로 나가지 않아요.
+
 ## iCloud 사진도 빠르게
 
 'iPhone 저장 공간 최적화'를 쓰면 원본이 iCloud에만 있는 사진이 많아서, 보통은 사진이 선명해질 때까지 기다려야 합니다. mind PIC은 이렇게 기다림을 줄여요.
@@ -169,6 +179,10 @@ mindPIC/
 ├── PhotoReviewViewModel.swift  필터별 사진 조회(백그라운드), 이동/좋아요/삭제/실행 취소,
 │                               기기 사진 우선 정렬, 프리히팅
 ├── TrashView.swift             휴지통 (복원, 비우기)
+├── SimilarPhotosView.swift     비슷한 사진 묶음 화면
+├── SimilarPhotosViewModel.swift 분석 진행, 남길 사진 선택, 정리 / 실행 취소
+├── SimilarPhotos.swift         비슷한 사진 분석 (Vision 특징 벡터, 묶기, 추천 사진 점수)
+├── PhotoThumbnailView.swift    정사각형 썸네일 (휴지통, 비슷한 사진)
 ├── AssetImageView.swift        미리보기 → 고해상도 로딩, iCloud 진행률 / 실패 처리
 ├── ReviewStateStore.swift      본 사진 / 휴지통 ID 저장 (UserDefaults)
 ├── PhotoModels.swift           PhotoItem, PhotoFilterType
@@ -181,6 +195,7 @@ mindPIC/
 
 - **UI**: SwiftUI
 - **사진**: PhotoKit (`PHAsset`, `PHCachingImageManager`)
+- **분석**: Vision (`VNGenerateImageFeaturePrintRequest`, `VNCalculateImageAestheticsScoresRequest`, `VNDetectFaceCaptureQualityRequest`), Core Image
 - **테스트**: Swift Testing (`mindPICTests`), XCTest UI 테스트 (`mindPICUITests`)
 
 ### 출시
