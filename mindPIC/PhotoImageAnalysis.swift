@@ -63,8 +63,10 @@ enum PhotoImageAnalysis {
     // 윤곽선 세기의 평균 (0~1). 흔들리거나 초점이 나간 사진일수록 낮다.
     static func sharpness(_ image: CGImage) -> Double {
         let input = CIImage(cgImage: image)
+        // 가장자리 바깥(투명)과의 경계가 윤곽선으로 잡히지 않도록 가장자리 픽셀을 늘려 둔다.
         guard let edges = CIFilter(name: "CIEdges",
-                                   parameters: [kCIInputImageKey: input, kCIInputIntensityKey: 1.0])?.outputImage,
+                                   parameters: [kCIInputImageKey: input.clampedToExtent(),
+                                                kCIInputIntensityKey: 1.0])?.outputImage,
               let rgb = averageColor(of: edges, extent: input.extent)
         else { return 0 }
         return (rgb.r + rgb.g + rgb.b) / 3
@@ -83,10 +85,11 @@ enum PhotoImageAnalysis {
                                                   kCIInputExtentKey: CIVector(cgRect: extent)])?.outputImage
         else { return nil }
 
-        var pixel = [UInt8](repeating: 0, count: 4)
-        ciContext.render(average, toBitmap: &pixel, rowBytes: 4,
+        // 선명도 평균은 0.01 안팎이라 8비트(1/255 단위)로 읽으면 차이가 뭉개진다.
+        var pixel = [Float](repeating: 0, count: 4)
+        ciContext.render(average, toBitmap: &pixel, rowBytes: 4 * MemoryLayout<Float>.size,
                          bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
-                         format: .RGBA8, colorSpace: nil)
-        return (Double(pixel[0]) / 255, Double(pixel[1]) / 255, Double(pixel[2]) / 255)
+                         format: .RGBAf, colorSpace: nil)
+        return (Double(pixel[0]), Double(pixel[1]), Double(pixel[2]))
     }
 }
