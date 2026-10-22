@@ -19,6 +19,12 @@ final class PhotoReviewViewModel: ObservableObject {
     }
     private static let onlyLocalKey = "onlyLocalPhotos"
 
+    // 종류 필터에서 사진을 분류하며 찾는 중일 때 (확인한 수, 전체 수)
+    @Published private(set) var categoryScan: (done: Int, total: Int)?
+    // 종류 필터는 최신 사진부터 이만큼 찾으면 멈춘다 (처음 분류는 시간이 걸리므로).
+    private static let categoryLimit = 100
+    private var loadTask: Task<Void, Never>?
+
     // ✅ 랜덤100 다 봤을 때 팝업 띄우기 트리거
     @Published var shouldAskForNewRandom: Bool = false
 
@@ -106,6 +112,7 @@ final class PhotoReviewViewModel: ObservableObject {
     func selectNonFavorite() { load(.nonFavorite) }
     func selectScreenshot() { load(.screenshot) }
     func selectBurst() { load(.burst) }
+    func selectCategory(_ category: PhotoCategory) { load(.category(category)) }
     func selectTrash() { load(.trash) }
 
     // 현재 선택된 필터 다시 적용
@@ -150,11 +157,28 @@ final class PhotoReviewViewModel: ObservableObject {
             isIncluded = { !trashed.contains($0) && !seen.contains($0) }
         }
         
-        Task {
-            let items = await Task.detached(priority: .userInitiated) {
-                PhotoReviewViewModel.fetchItems(for: filter, trashedIDs: trashed, isIncluded: isIncluded)
-            }.value
+        // 이전 조회가 아직 돌고 있으면 멈춘다 (종류 필터의 분류는 오래 걸릴 수 있다).
+        loadTask?.cancel()
+        categoryScan = nil
+        loadTask = Task {
+            let items: [PhotoItem]
+            if case .category(let category) = filter {
+                categoryScan = (0, 0)
+                items = await PhotoCategoryIndex.shared.find(
+                    category, limit: Self.categoryLimit, isIncluded: isIncluded
+                ) { done, total in
+                    Task { @MainActor [weak self] in
+                        guard let self, generation == self.loadGeneration else { return }
+                        self.categoryScan = (done, total)
+                    }
+                }
+            } else {
+                items = await Task.detached(priority: .userInitiated) {
+                    PhotoReviewViewModel.fetchItems(for: filter, trashedIDs: trashed, isIncluded: isIncluded)
+                }.value
+            }
             guard generation == loadGeneration else { return }
+            categoryScan = nil
 
             if filter == .trash {
                 // 라이브러리에서 이미 사라진 사진은 휴지통 목록에서도 정리
@@ -303,6 +327,9 @@ final class PhotoReviewViewModel: ObservableObject {
 
         case .burst:
             return fetchImages(isIncluded: isIncluded) { $0.representsBurst || $0.burstIdentifier != nil }
+
+        case .category:
+            return []   // 분류가 필요해 PhotoCategoryIndex.find로 따로 조회한다
 
         case .trash:
             guard !trashedIDs.isEmpty else { return [] }

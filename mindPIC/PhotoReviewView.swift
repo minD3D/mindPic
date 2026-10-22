@@ -85,9 +85,14 @@ struct PhotoReviewView: View {
                             .frame(maxHeight: .infinity)
 
                     } else if vm.isLoading {
-                        ProgressView("사진 불러오는 중…")
-                            .tint(AppTheme.accentDark)
-                            .frame(maxHeight: .infinity)
+                        if let scan = vm.categoryScan {
+                            categoryScanProgress(scan)
+                                .frame(maxHeight: .infinity)
+                        } else {
+                            ProgressView("사진 불러오는 중…")
+                                .tint(AppTheme.accentDark)
+                                .frame(maxHeight: .infinity)
+                        }
 
                     } else if let current = vm.currentPhoto {
                         progressHeader
@@ -319,6 +324,27 @@ struct PhotoReviewView: View {
                     withAnimation(.spring()) { dragOffset = .zero }
                 }
             }
+    }
+
+    // 종류 필터: 처음에는 사진을 분류하느라 시간이 걸리므로 진행 상황을 보여준다.
+    private func categoryScanProgress(_ scan: (done: Int, total: Int)) -> some View {
+        VStack(spacing: 12) {
+            ProgressView()
+                .tint(AppTheme.accentDark)
+            Text(verbatim: String(localized: "\(vm.filterType.title) 사진 찾는 중…"))
+                .font(AppFont.buttonSmall)
+                .foregroundStyle(AppTheme.textPrimary)
+            if scan.total > 0 {
+                Text("\(scan.done) / \(scan.total)장 확인")
+                    .font(AppFont.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
+            Text("처음 한 번만 분석하고, 다음부터는 바로 보여드려요.")
+                .font(AppFont.caption)
+                .foregroundStyle(AppTheme.textSecondary)
+        }
+        .padding(.horizontal, 32)
     }
 
     private var filterChipText: String {
@@ -597,6 +623,16 @@ struct PhotoReviewView: View {
                     }
                     filterRow("연사(버스트)", isSelected: vm.filterType == .burst) {
                         vm.selectBurst()
+                    }
+                }
+
+                Section(header: Text("종류별"),
+                        footer: Text("기기 안에서 사진을 분석해 최근 사진부터 최대 100장을 찾아요. 처음에는 시간이 걸리지만 결과를 저장해 다음부터는 빨라요.")) {
+                    ForEach(PhotoCategory.allCases) { category in
+                        filterRow(LocalizedStringKey(category.title),
+                                  isSelected: vm.filterType == .category(category)) {
+                            vm.selectCategory(category)
+                        }
                     }
                 }
 

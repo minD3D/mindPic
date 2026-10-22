@@ -24,6 +24,7 @@ enum PhotoFilterType: Equatable {
     case nonFavorite
     case screenshot
     case burst
+    case category(PhotoCategory)   // 기기 안에서 분류한 사진 종류
     case trash
 }
 
@@ -45,6 +46,7 @@ extension PhotoFilterType {
         case .nonFavorite: return String(localized: "즐겨찾기 안 된 사진")
         case .screenshot: return String(localized: "스크린샷")
         case .burst: return String(localized: "연사")
+        case .category(let category): return category.title
         case .trash: return String(localized: "휴지통")
         }
     }

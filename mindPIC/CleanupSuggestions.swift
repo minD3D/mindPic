@@ -155,6 +155,9 @@ enum CleanupSuggestionAnalyzer {
             metrics.isUtility = aesthetics.isUtility
         } else {
             metrics.sharpness = PhotoImageAnalysis.sharpness(image)
+            // iOS 17: 분류 라벨로 기록용(문서·영수증 등)을 판단한다. 결과는 종류 필터와 함께 쓰도록 저장된다.
+            let categories = await PhotoCategoryIndex.shared.categories(for: item, image: image)
+            metrics.isUtility = categories?.contains(.document) ?? false
         }
 
         let reasons = CleanupRules.reasons(for: metrics)

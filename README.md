@@ -78,6 +78,7 @@
 - **N년 전 오늘** (±15일) — 그날의 추억을 다시 보며 정리
 - **최근 7일 / 30일**, **원하는 달 선택**
 - **인물 사진**, **즐겨찾기 안 된 사진**, **스크린샷**, **연사**
+- **종류별: 음식 / 문서·텍스트 / 동물 / 풍경** — 기기 안에서 사진을 분석해 최근 사진부터 최대 100장 (처음 한 번만 분석하고 결과를 저장)
 - **기기에 있는 사진만 보기** — iCloud에서 받아야 하는 사진은 건너뛰어 기다림 없이 보기
 
 </td>
@@ -127,7 +128,7 @@
 | 아쉬운 사진 | Apple의 사진 미적 점수가 낮음 (iOS 18 이상) |
 | 흐림 | 윤곽선이 약함 — 흔들리거나 초점이 나감 (iOS 17) |
 | 어두움 / 너무 밝음 | 평균 밝기가 아주 낮거나 높음 — 주머니 속, 실수로 찍힌 사진 |
-| 기록용 | 영수증·문서·메모처럼 기록용으로 찍은 사진 (iOS 18 이상) |
+| 기록용 | 영수증·문서·메모처럼 기록용으로 찍은 사진 (iOS 18은 미적 점수 분석, iOS 17은 사진 분류 라벨로 판단) |
 | 스크린샷 | 스크린샷 |
 
 - 추천된 사진은 처음부터 선택돼 있어요. 남길 사진만 탭해서 빼고 **N장 휴지통으로**를 누르면 끝. 바로 **실행 취소**할 수 있어요.
@@ -202,7 +203,8 @@ mindPIC/
 ├── CleanupSuggestionsView.swift 정리 추천 화면 (이유별 칩, 선택, 실행 취소)
 ├── CleanupSuggestionsViewModel.swift 분석 진행, 선택, 휴지통 이동 / 실행 취소
 ├── CleanupSuggestions.swift    정리 추천 이유 판단 규칙, 분석기
-├── PhotoImageAnalysis.swift    사진 한 장 분석 (썸네일, 미적 점수, 얼굴 품질, 선명도, 밝기)
+├── PhotoImageAnalysis.swift    사진 한 장 분석 (썸네일, 미적 점수, 얼굴 품질, 선명도, 밝기, 분류 라벨)
+├── PhotoCategories.swift       사진 종류(음식·문서·동물·풍경)와 분류 결과 색인 (기기에 저장)
 ├── PhotoThumbnailView.swift    정사각형 썸네일 (휴지통, 비슷한 사진, 정리 추천)
 ├── AssetImageView.swift        미리보기 → 고해상도 로딩, iCloud 진행률 / 실패 처리
 ├── ReviewStateStore.swift      본 사진 / 휴지통 ID 저장 (UserDefaults)
@@ -216,7 +218,7 @@ mindPIC/
 
 - **UI**: SwiftUI
 - **사진**: PhotoKit (`PHAsset`, `PHCachingImageManager`)
-- **분석**: Vision (`VNGenerateImageFeaturePrintRequest`, `VNCalculateImageAestheticsScoresRequest`, `VNDetectFaceCaptureQualityRequest`), Core Image
+- **분석**: Vision (`VNGenerateImageFeaturePrintRequest`, `VNCalculateImageAestheticsScoresRequest`, `VNDetectFaceCaptureQualityRequest`, `VNClassifyImageRequest`), Core Image
 - **테스트**: Swift Testing (`mindPICTests`), XCTest UI 테스트 (`mindPICUITests`)
 
 ### 출시
