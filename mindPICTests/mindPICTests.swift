@@ -7,6 +7,7 @@
 
 import Foundation
 import Testing
+import Vision
 @testable import mindPIC
 
 struct ReviewStateStoreTests {
@@ -223,5 +224,27 @@ struct CleanupRulesTests {
         #expect(CleanupRules.reasons(for: metrics(aesthetic: -0.8, utility: true)) == [.utility])
         #expect(CleanupRules.reasons(for: metrics(aesthetic: -0.8, utility: true, screenshot: true)) == [.screenshot])
         #expect(CleanupRules.reasons(for: metrics(sharpness: 0.001, screenshot: true)) == [.screenshot])
+    }
+}
+
+struct PhotoCategoryTests {
+
+    // 분류 라벨 이름이 Vision에 실제로 있는지 확인한다 (오타나 없는 라벨이면 그 종류는 절대 찾을 수 없다).
+    @Test func allLabelsAreKnownToVision() throws {
+        let supported = Set(try VNClassifyImageRequest().supportedIdentifiers())
+        for category in PhotoCategory.allCases {
+            #expect(!category.labels.isEmpty, "\(category) has no labels")
+            let unknown = category.labels.subtracting(supported)
+            #expect(unknown.isEmpty, "\(category): unknown labels \(unknown.sorted())")
+        }
+    }
+
+    @Test func mapsLabelsToCategories() {
+        for category in PhotoCategory.allCases {
+            guard let label = category.labels.first else { continue }
+            #expect(PhotoCategory.categories(for: [label]).contains(category))
+        }
+        #expect(PhotoCategory.categories(for: ["no_such_label"]).isEmpty)
+        #expect(PhotoCategory.categories(for: []).isEmpty)
     }
 }

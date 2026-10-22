@@ -2404,6 +2404,150 @@
           }
         }
       }
+    },
+    "음식" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Food"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음식"
+          }
+        }
+      }
+    },
+    "문서·텍스트" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Documents & Text"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문서·텍스트"
+          }
+        }
+      }
+    },
+    "동물" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animals"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동물"
+          }
+        }
+      }
+    },
+    "풍경" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scenery"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "풍경"
+          }
+        }
+      }
+    },
+    "종류별" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "By Content"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "종류별"
+          }
+        }
+      }
+    },
+    "기기 안에서 사진을 분석해 최근 사진부터 최대 100장을 찾아요. 처음에는 시간이 걸리지만 결과를 저장해 다음부터는 빨라요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos are analyzed on your device to find up to 100 of the most recent matches. The first time takes a while, but results are saved so it's quick afterwards."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기기 안에서 사진을 분석해 최근 사진부터 최대 100장을 찾아요. 처음에는 시간이 걸리지만 결과를 저장해 다음부터는 빨라요."
+          }
+        }
+      }
+    },
+    "%@ 사진 찾는 중…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finding %@ photos…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 사진 찾는 중…"
+          }
+        }
+      }
+    },
+    "%lld / %lld장 확인" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checked %1$lld of %2$lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld장 확인"
+          }
+        }
+      }
+    },
+    "처음 한 번만 분석하고, 다음부터는 바로 보여드려요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos are analyzed only the first time — next time it's instant."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "처음 한 번만 분석하고, 다음부터는 바로 보여드려요."
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

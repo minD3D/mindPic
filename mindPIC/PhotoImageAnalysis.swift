@@ -50,6 +50,14 @@ enum PhotoImageAnalysis {
         return Double(qualities.reduce(0, +) / Float(qualities.count))
     }
 
+    // 사진에 붙은 분류 라벨 (Vision 기본 분류 모델, 1,000개 이상). 신뢰도가 기준 이상인 것만.
+    static func classificationLabels(_ image: CGImage, minimumConfidence: Float) -> Set<String> {
+        let request = VNClassifyImageRequest()
+        try? VNImageRequestHandler(cgImage: image).perform([request])
+        let observations = (request.results ?? []).compactMap { $0 as? VNClassificationObservation }
+        return Set(observations.filter { $0.confidence >= minimumConfidence }.map(\.identifier))
+    }
+
     private static let ciContext = CIContext(options: [.workingColorSpace: NSNull()])
 
     // 윤곽선 세기의 평균 (0~1). 흔들리거나 초점이 나간 사진일수록 낮다.

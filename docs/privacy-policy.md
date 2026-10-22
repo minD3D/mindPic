@@ -32,8 +32,9 @@ minD3D(이하 "개발자")은 mind PIC(이하 "앱") 이용자의 개인정보�
 
 - 이미 확인한 사진의 식별자(ID) 목록 — '안 본 사진만 보기' 기능에 사용
 - 휴지통에 담은 사진의 식별자(ID) 목록
+- 사진 종류 분석 결과 (사진 식별자별로 '음식', '문서' 같은 종류) — 종류별 필터를 빠르게 보여주는 데 사용
 
-사진 자체가 아닌 식별자만 저장하며, 개발자는 이 정보에 접근할 수 없습니다. 이 정보는 앱의 **설정 > 본 사진 기록 초기화**로 지우거나, 앱을 삭제하면 함께 삭제됩니다.
+사진 자체가 아닌 식별자와 분석 결과만 저장하며, 개발자는 이 정보에 접근할 수 없습니다. 본 사진 기록은 앱의 **설정 > 본 사진 기록 초기화**로 지울 수 있고, 모든 정보는 앱을 삭제하면 함께 삭제됩니다.
 
 ## 4. 제3자 제공 및 처리 위탁
 
@@ -65,7 +66,7 @@ mind PIC ("the app") **does not collect, store on any server, or share any perso
 - No account, no login, no developer-operated server.
 - No advertising, analytics, or tracking SDKs.
 - With your permission, the app accesses your photo library **on your device only** to let you review photos, mark favorites, and delete photos you choose. Deleted photos move to "Recently Deleted" in the Photos app and are permanently removed after 30 days.
-- The app stores, on your device only, the IDs of photos you have already reviewed and of photos in the app's trash. You can clear this in the app's Settings, and it is removed when you delete the app.
+- The app stores, on your device only, the IDs of photos you have already reviewed and of photos in the app's trash, and on-device content labels for photos (such as "food" or "document") so the content filters load quickly. You can clear your review history in the app's Settings, and everything is removed when you delete the app.
 - You can change or revoke photo access anytime in iOS Settings > mind PIC > Photos.
 
 Contact: minD3D via [GitHub Issues](https://github.com/minD3D/mindPic/issues/new) (public — please don't include personal information)
