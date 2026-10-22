@@ -248,3 +248,60 @@ struct PhotoCategoryTests {
         #expect(PhotoCategory.categories(for: []).isEmpty)
     }
 }
+
+struct CleanupFilterTests {
+
+    @Test func emptyFilterMatchesEverything() {
+        let filter = CleanupFilter()
+        #expect(filter.activeCount == 0)
+        #expect(filter.matches(CleanupPhotoFacts()))
+        #expect(filter.matches(CleanupPhotoFacts(kinds: [.burst], isSeen: true, isInAlbum: true)))
+    }
+
+    @Test func kindsMatchAnySelectedKind() {
+        let filter = CleanupFilter(kinds: [.selfie, .live])
+        #expect(filter.matches(CleanupPhotoFacts(kinds: [.live])))
+        #expect(filter.matches(CleanupPhotoFacts(kinds: [.selfie, .burst])))
+        #expect(!filter.matches(CleanupPhotoFacts(kinds: [.burst])))
+        #expect(!filter.matches(CleanupPhotoFacts()))
+    }
+
+    @Test func statusTogglesExcludeSeenAndAlbumPhotos() {
+        let filter = CleanupFilter(unseenOnly: true, notInAlbumOnly: true)
+        #expect(filter.activeCount == 2)
+        #expect(filter.matches(CleanupPhotoFacts()))
+        #expect(!filter.matches(CleanupPhotoFacts(isSeen: true)))
+        #expect(!filter.matches(CleanupPhotoFacts(isInAlbum: true)))
+    }
+
+    @Test func sortDoesNotCountAsFilter() {
+        #expect(CleanupFilter(sort: .largest).activeCount == 0)
+    }
+
+    @Test func groupMatchesWhenAnyPhotoMatches() {
+        let filter = CleanupFilter(kinds: [.burst], unseenOnly: true)
+        #expect(filter.matchesAny([CleanupPhotoFacts(isSeen: true), CleanupPhotoFacts(kinds: [.burst])]))
+        // 조건은 한 사진 안에서 모두 맞아야 한다
+        #expect(!filter.matchesAny([CleanupPhotoFacts(kinds: [.burst], isSeen: true), CleanupPhotoFacts()]))
+        #expect(!filter.matchesAny([]))
+    }
+
+    @Test func categoriesMatchAnySelectedCategory() {
+        let filter = CleanupFilter(categories: [.food, .animal])
+        #expect(filter.activeCount == 1)
+        #expect(filter.matches(CleanupPhotoFacts(categories: [.animal, .nature])))
+        #expect(!filter.matches(CleanupPhotoFacts(categories: [.document])))
+        #expect(!filter.matches(CleanupPhotoFacts()))
+    }
+
+    @Test func customPeriodIncludesWholeEndDay() {
+        let cal = Calendar.current
+        let start = cal.date(from: DateComponents(year: 2026, month: 3, day: 10, hour: 15))!
+        let end = cal.date(from: DateComponents(year: 2026, month: 3, day: 12, hour: 9))!
+        // 시작·끝을 거꾸로 골라도 같은 범위
+        let range = CleanupPeriod.custom.dateRange(customStart: end, customEnd: start)
+        #expect(range.since == cal.date(from: DateComponents(year: 2026, month: 3, day: 10)))
+        #expect(range.until == cal.date(from: DateComponents(year: 2026, month: 3, day: 13)))
+        #expect(CleanupPeriod.scope(.all).dateRange(customStart: start, customEnd: end).until == nil)
+    }
+}

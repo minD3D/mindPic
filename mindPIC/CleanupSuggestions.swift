@@ -24,6 +24,18 @@ enum CleanupReason: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    // 다른 화면(사진 탐색 칩)에 넘길 이름
+    var name: String {
+        switch self {
+        case .lowQuality: return String(localized: "아쉬운 사진")
+        case .blurry: return String(localized: "흐림")
+        case .dark: return String(localized: "어두움")
+        case .bright: return String(localized: "너무 밝음")
+        case .utility: return String(localized: "기록용")
+        case .screenshot: return String(localized: "스크린샷")
+        }
+    }
+
     var systemImage: String {
         switch self {
         case .lowQuality: return "hand.thumbsdown"
@@ -76,6 +88,7 @@ enum CleanupRules {
 struct CleanupSuggestion: Identifiable, Sendable {
     let item: PhotoItem
     let reasons: [CleanupReason]
+    var bytes: Int64 = 0   // 정리하면 확보되는 용량 (알 수 없으면 0)
     var id: String { item.id }
 }
 
@@ -89,12 +102,13 @@ enum CleanupSuggestionAnalyzer {
     // 동시에 분석할 사진 수. Vision 요청은 서로 독립적이라 나눠서 처리하면 빨라진다.
     static let concurrency = 3
 
-    /// since 이후(nil이면 전체) 사진을 최신순으로 분석해, 정리할 만한 사진을 찾는 대로 흘려보낸다.
+    /// since 이후, until 이전(nil이면 제한 없음) 사진을 최신순으로 분석해, 정리할 만한 사진을 찾는 대로 흘려보낸다.
     /// 즐겨찾기한 사진은 추천하지 않는다.
-    static func analyze(since: Date?, excluding: Set<String>) -> AsyncStream<Event> {
+    static func analyze(since: Date?, until: Date? = nil, excluding: Set<String>) -> AsyncStream<Event> {
         AsyncStream { continuation in
             let task = Task.detached(priority: .userInitiated) {
-                await CleanupSuggestionAnalyzer.run(since: since, excluding: excluding, continuation: continuation)
+                await CleanupSuggestionAnalyzer.run(since: since, until: until, excluding: excluding,
+                                                    continuation: continuation)
                 continuation.finish()
             }
             continuation.onTermination = { _ in task.cancel() }
@@ -102,12 +116,15 @@ enum CleanupSuggestionAnalyzer {
     }
 
     private static func run(
-        since: Date?, excluding: Set<String>, continuation: AsyncStream<Event>.Continuation
+        since: Date?, until: Date?, excluding: Set<String>, continuation: AsyncStream<Event>.Continuation
     ) async {
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        if let since {
-            options.predicate = NSPredicate(format: "creationDate >= %@", since as NSDate)
+        var predicates: [NSPredicate] = []
+        if let since { predicates.append(NSPredicate(format: "creationDate >= %@", since as NSDate)) }
+        if let until { predicates.append(NSPredicate(format: "creationDate < %@", until as NSDate)) }
+        if !predicates.isEmpty {
+            options.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
         }
         let result = PHAsset.fetchAssets(with: .image, options: options)
 
@@ -163,6 +180,8 @@ enum CleanupSuggestionAnalyzer {
         }
 
         let reasons = CleanupRules.reasons(for: metrics)
-        return reasons.isEmpty ? nil : CleanupSuggestion(item: item, reasons: reasons)
+        guard !reasons.isEmpty else { return nil }
+        // 용량은 추천된 사진만 구한다 (용량순 정렬, 확보 용량 표시용)
+        return CleanupSuggestion(item: item, reasons: reasons, bytes: PhotoSize.bytes(of: item.asset))
     }
 }

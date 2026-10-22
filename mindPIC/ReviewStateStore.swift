@@ -17,6 +17,12 @@ final class ReviewStateStore {
         trashedIDs = Self.loadIDs(forKey: Self.trashedKey, from: defaults)
     }
 
+    // 다른 화면에서 바뀐 기록을 다시 읽는다.
+    func reload() {
+        seenIDs = Self.loadIDs(forKey: Self.seenKey, from: defaults)
+        trashedIDs = Self.loadIDs(forKey: Self.trashedKey, from: defaults)
+    }
+
     static func trashCount(in defaults: UserDefaults = .standard) -> Int {
         loadIDs(forKey: trashedKey, from: defaults).count
     }

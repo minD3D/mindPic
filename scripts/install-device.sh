@@ -27,7 +27,7 @@ DERIVED="$ROOT/build/device"
 
 if [[ -z "${DEVICE_ID:-}" ]]; then
     DEVICE_ID="$(xcrun devicectl list devices 2>/dev/null \
-        | awk '/available/ && /iPhone/ {for (i=1;i<=NF;i++) if ($i ~ /^[0-9A-F-]{36}$/) {print $i; exit}}')"
+        | awk '/(available|connected)/ && /iPhone/ {for (i=1;i<=NF;i++) if ($i ~ /^[0-9A-F-]{36}$/) {print $i; exit}}')"
 fi
 if [[ -z "$DEVICE_ID" ]]; then
     echo "✗ 연결된 iPhone을 찾지 못했습니다. 'xcrun devicectl list devices'로 확인하세요." >&2

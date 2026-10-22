@@ -9,9 +9,22 @@ final class PhotoReviewViewModel: ObservableObject {
     @Published var isLoading: Bool = false
 
     @Published private(set) var filterType: PhotoFilterType = .random100
+    // '랜덤 1개월'로 고른 달인지 (필터 시트에서 '이 달부터 1개월 보기'와 구분해 체크 표시)
+    @Published private(set) var isRandomMonth = false
 
-    // 안 본 사진만 보기 토글
-    @Published var onlyUnseen: Bool = false
+    // 진행 표시용: 불러왔을 때의 전체 장수. 삭제해도 고정되고 위치 번호는 계속 늘어난다.
+    @Published private(set) var totalCount = 0
+    // 휴지통 등으로 목록에서 빠진 사진 ID → 빠질 때 바로 뒤에 있던 사진 ID (맨 끝이었으면 nil).
+    // 뒤 사진이 지금 사진보다 앞이면 지운 사진도 앞에 있던 것이라 번호에 더한다.
+    @Published private var removedAnchors: [String: String?] = [:]
+    // 번호에는 세지 않지만 앱이 바꾸거나 뺀 사진 ID → 그 자리를 이어받은 사진 ID
+    private var replacedAnchors: [String: String?] = [:]
+
+    // 안 본 사진만 보기 토글 (기본: 켜짐 → 처음 화면은 안 본 사진 중 랜덤 100장). 앱을 다시 열어도 유지한다.
+    @Published var onlyUnseen: Bool = UserDefaults.standard.object(forKey: PhotoReviewViewModel.onlyUnseenKey) as? Bool ?? true {
+        didSet { UserDefaults.standard.set(onlyUnseen, forKey: Self.onlyUnseenKey) }
+    }
+    private static let onlyUnseenKey = "onlyUnseenPhotos"
 
     // 기기에 있는 사진만 보기 토글 (iCloud에서 받아야 하는 사진은 건너뜀). 앱을 다시 열어도 유지한다.
     @Published var onlyLocal: Bool = UserDefaults.standard.bool(forKey: PhotoReviewViewModel.onlyLocalKey) {
@@ -81,6 +94,37 @@ final class PhotoReviewViewModel: ObservableObject {
         self.store = store
     }
 
+    // 처음 불러온 목록 기준 지금 사진의 번호 (1부터)
+    var position: Int {
+        guard !photos.isEmpty else { return 0 }
+        let passed = Set(photos[...min(currentIndex, photos.count - 1)].map(\.id))
+        let removedBefore = removedAnchors.values.filter { anchor in
+            guard let id = resolveAnchor(anchor) else { return false }
+            return passed.contains(id)
+        }.count
+        return min(currentIndex + removedBefore + 1, max(totalCount, 1))
+    }
+
+    // 뒤 사진도 빠졌으면 그 사진의 뒤 사진을 따라가 지금 목록에 있는 사진을 찾는다.
+    private func resolveAnchor(_ anchor: String?) -> String? {
+        var current = anchor
+        var hops = 0
+        while let id = current, hops <= photos.count + removedAnchors.count + replacedAnchors.count {
+            if let next = removedAnchors[id] ?? replacedAnchors[id] {
+                current = next
+                hops += 1
+            } else {
+                return id
+            }
+        }
+        return nil
+    }
+
+    // 목록의 index 자리에서 사진이 빠진 직후, 그 자리를 이어받은 사진 ID
+    private func anchorID(after index: Int) -> String? {
+        index < photos.count ? photos[index].id : nil
+    }
+
     var currentPhoto: PhotoItem? {
         guard currentIndex < photos.count else { return nil }
         return photos[currentIndex]
@@ -113,10 +157,11 @@ final class PhotoReviewViewModel: ObservableObject {
     func selectScreenshot() { load(.screenshot) }
     func selectBurst() { load(.burst) }
     func selectCategory(_ category: PhotoCategory) { load(.category(category)) }
+    func select(_ filter: PhotoFilterType) { load(filter) }
     func selectTrash() { load(.trash) }
 
     // 현재 선택된 필터 다시 적용
-    func reloadByFilter() { load(filterType) }
+    func reloadByFilter() { load(filterType, isRandomMonth: isRandomMonth) }
 
     // 🔹 랜덤 1개월 (전체 기간)
     // 라이브러리에서 사진 한 장을 무작위로 골라 그 사진이 속한 달을 보여준다.
@@ -129,7 +174,7 @@ final class PhotoReviewViewModel: ObservableObject {
             }.value
             guard generation == loadGeneration else { return }
             if let monthStart {
-                load(.monthRange(monthStart))
+                load(.monthRange(monthStart), isRandomMonth: true)
             } else {
                 finishLoading(with: [])
             }
@@ -144,8 +189,9 @@ final class PhotoReviewViewModel: ObservableObject {
     }
 
     // 사진 조회는 라이브러리 전체를 훑을 수 있어 메인 스레드 밖에서 수행한다.
-    private func load(_ filter: PhotoFilterType) {
+    private func load(_ filter: PhotoFilterType, isRandomMonth: Bool = false) {
         filterType = filter
+        self.isRandomMonth = isRandomMonth
         let generation = beginLoading()
 
         let trashed = store.trashedIDs
@@ -249,6 +295,9 @@ final class PhotoReviewViewModel: ObservableObject {
         randomReserve = reserve
         photos = items
         currentIndex = 0
+        totalCount = items.count
+        removedAnchors = [:]
+        replacedAnchors = [:]
         isLoading = false
         shouldAskForNewRandom = false
         lastDeleted = nil
@@ -330,6 +379,17 @@ final class PhotoReviewViewModel: ObservableObject {
 
         case .category:
             return []   // 분류가 필요해 PhotoCategoryIndex.find로 따로 조회한다
+
+        case .list(_, let ids):
+            // 받은 순서 그대로 보여준다.
+            var assets: [String: PHAsset] = [:]
+            PHAsset.fetchAssets(withLocalIdentifiers: ids, options: nil).enumerateObjects { asset, _, _ in
+                assets[asset.localIdentifier] = asset
+            }
+            return ids.compactMap { id in
+                guard let asset = assets[id], isIncluded(id) else { return nil }
+                return PhotoItem(asset: asset)
+            }
 
         case .trash:
             guard !trashedIDs.isEmpty else { return [] }
@@ -432,6 +492,8 @@ final class PhotoReviewViewModel: ObservableObject {
         let removeIndex = currentIndex
         lastDeleted = (current, removeIndex)
         photos.remove(at: removeIndex)
+        // 값이 nil(맨 끝)이어도 키가 남도록 subscript 대신 updateValue를 쓴다.
+        removedAnchors.updateValue(anchorID(after: removeIndex), forKey: current.id)
         if photos.isEmpty {
             currentIndex = 0
             if filterType == .random100 { shouldAskForNewRandom = true }
@@ -450,6 +512,7 @@ final class PhotoReviewViewModel: ObservableObject {
 
         let insertIndex = min(deleted.index, photos.count)
         photos.insert(deleted.item, at: insertIndex)
+        removedAnchors.removeValue(forKey: deleted.item.id)
         currentIndex = insertIndex
         shouldAskForNewRandom = false
         updateCaching()
@@ -497,6 +560,7 @@ final class PhotoReviewViewModel: ObservableObject {
 
         if filterType == .trash, let index = photos.firstIndex(where: { $0.id == photoID }) {
             photos.remove(at: index)
+            removedAnchors.updateValue(anchorID(after: index), forKey: photoID)
             if photos.isEmpty {
                 currentIndex = 0
             } else if currentIndex >= photos.count {
@@ -545,11 +609,14 @@ final class PhotoReviewViewModel: ObservableObject {
                   let index = photos.firstIndex(where: { $0.id == item.id }), index > currentIndex
             else { return }
             photos[index] = replacement
+            replacedAnchors.updateValue(replacement.id, forKey: item.id)
             localStatus[replacement.id] = true
             updateCaching()
         } else if onlyLocal,
                   let index = photos.firstIndex(where: { $0.id == item.id }), index > currentIndex {
             photos.remove(at: index)
+            replacedAnchors.updateValue(anchorID(after: index), forKey: item.id)
+            totalCount = max(totalCount - 1, 0)   // 볼 수 없는 사진이라 전체 수에서도 뺀다
             updateCaching()
         }
     }
@@ -577,14 +644,35 @@ final class PhotoReviewViewModel: ObservableObject {
 
     // 지금 보는 사진 다음부터: 기기에 있음 → 아직 모름 → iCloud 순으로, 같은 그룹 안의 순서는 유지한다.
     private func moveLocalPhotosForward() {
-        let start = currentIndex + 1
+        let start = reorderStart
         guard start < photos.count else { return }
 
         let upcoming = Array(photos[start...])
         let order = Self.availabilityOrder(ids: upcoming.map(\.id), status: localStatus)
         guard order != Array(upcoming.indices) else { return }
         photos.replaceSubrange(start..., with: order.map { upcoming[$0] })
+
+        // 경계 바로 앞에 지운 사진은 순서가 바뀐 뒤에도 새로 맨 앞에 온 사진 앞에 둔다.
+        let oldFirst = upcoming[0].id
+        let newFirst = photos[start].id
+        for (id, anchor) in Array(removedAnchors) where resolveAnchor(anchor) == oldFirst {
+            removedAnchors.updateValue(newFirst, forKey: id)
+        }
         updateCaching()
+    }
+
+    // 순서를 바꿔도 되는 첫 위치. 지운 뒤 '이전'으로 돌아온 경우 지운 자리까지는
+    // 이미 지나온 사진이라 순서를 그대로 둬야 번호와 보는 순서가 어긋나지 않는다.
+    private var reorderStart: Int {
+        var start = currentIndex + 1
+        guard !removedAnchors.isEmpty else { return start }
+        let indexByID = Dictionary(photos.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
+        for anchor in removedAnchors.values {
+            if let id = resolveAnchor(anchor), let index = indexByID[id] {
+                start = max(start, index)
+            }
+        }
+        return start
     }
 
     /// 기기에 있음(true) → 아직 모름(nil) → iCloud(false) 순으로 정렬한 인덱스. 같은 그룹 안의 순서는 유지한다.

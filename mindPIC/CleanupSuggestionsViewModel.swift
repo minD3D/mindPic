@@ -3,7 +3,12 @@ import Foundation
 
 @MainActor
 final class CleanupSuggestionsViewModel: ObservableObject {
-    @Published var scope: AnalysisScope = .month
+    @Published var period: CleanupPeriod = .scope(.month)
+    // '직접 선택' 기간 (양 끝 날짜 포함)
+    @Published var customStart = Calendar.current.date(byAdding: .month, value: -3, to: Date()) ?? Date()
+    @Published var customEnd = Date()
+    // 종류·상태·정렬. 기간을 바꿔도 유지한다.
+    @Published var filter = CleanupFilter()
     @Published private(set) var suggestions: [CleanupSuggestion] = []
     @Published private(set) var isAnalyzing = false
     @Published private(set) var analyzedCount = 0
@@ -12,7 +17,7 @@ final class CleanupSuggestionsViewModel: ObservableObject {
     // nil이면 모든 이유
     @Published var reasonFilter: CleanupReason?
 
-    // 휴지통으로 보낼 사진. 추천된 사진은 처음부터 선택돼 있고, 탭해서 뺄 수 있다.
+    // 휴지통으로 보낼 사진. 오탐이 있을 수 있어 처음엔 아무것도 고르지 않고, 사용자가 탭하거나 '모두 선택'으로 고른다.
     @Published private var selectedIDs: Set<String> = []
 
     // 이번에 휴지통으로 옮긴 사진 수
@@ -23,8 +28,12 @@ final class CleanupSuggestionsViewModel: ObservableObject {
     var canUndo: Bool { !lastTrashed.isEmpty }
     var lastTrashedCount: Int { lastTrashed.count }
 
+    // 앨범·셀카 소속 (분석을 시작할 때 다시 모은다)
+    @Published private var membership = PhotoMembership()
+
     private let store: ReviewStateStore
     private var analysisTask: Task<Void, Never>?
+    private var membershipTask: Task<Void, Never>?
     private var generation = 0
 
     init(store: ReviewStateStore = ReviewStateStore()) {
@@ -32,13 +41,30 @@ final class CleanupSuggestionsViewModel: ObservableObject {
     }
 
     // MARK: - 보이는 목록
+    // 종류·상태 필터를 적용한 목록 (이유 칩 숫자의 기준)
+    var filteredSuggestions: [CleanupSuggestion] {
+        guard filter.activeCount > 0 else { return suggestions }
+        let seenIDs = store.seenIDs
+        return suggestions.filter { filter.matches(membership.facts(for: $0.item.asset, seenIDs: seenIDs)) }
+    }
+
     var visibleSuggestions: [CleanupSuggestion] {
-        guard let reasonFilter else { return suggestions }
-        return suggestions.filter { $0.reasons.contains(reasonFilter) }
+        var list = filteredSuggestions
+        if let reasonFilter { list = list.filter { $0.reasons.contains(reasonFilter) } }
+        if filter.sort == .largest { list.sort { $0.bytes > $1.bytes } }
+        return list
     }
 
     func count(for reason: CleanupReason) -> Int {
-        suggestions.filter { $0.reasons.contains(reason) }.count
+        filteredSuggestions.filter { $0.reasons.contains(reason) }.count
+    }
+
+    var selectedVisibleBytes: Int64 {
+        visibleSuggestions.filter { selectedIDs.contains($0.id) }.reduce(0) { $0 + $1.bytes }
+    }
+
+    private var dateRange: (since: Date?, until: Date?) {
+        period.dateRange(customStart: customStart, customEnd: customEnd)
     }
 
     // 지금 목록에 나온 이유만 필터 칩으로 보여준다.
@@ -56,6 +82,9 @@ final class CleanupSuggestionsViewModel: ObservableObject {
 
     func isSelected(_ id: String) -> Bool { selectedIDs.contains(id) }
 
+    // 추천이 없을 때 넓혀 볼 다음 기간. 이미 전체면 nil.
+    var widerPeriod: CleanupPeriod? { period.wider }
+
     // MARK: - 분석
     func start() {
         analysisTask?.cancel()
@@ -70,7 +99,16 @@ final class CleanupSuggestionsViewModel: ObservableObject {
         totalCount = 0
         isAnalyzing = true
 
-        let stream = CleanupSuggestionAnalyzer.analyze(since: scope.since, excluding: store.trashedIDs)
+        membershipTask?.cancel()
+        membershipTask = Task { [weak self] in
+            let loaded = await Task.detached(priority: .userInitiated) { PhotoMembership.load() }.value
+            guard let self, current == self.generation else { return }
+            self.membership = loaded
+        }
+
+        let range = dateRange
+        let stream = CleanupSuggestionAnalyzer.analyze(since: range.since, until: range.until,
+                                                       excluding: store.trashedIDs)
         analysisTask = Task { [weak self] in
             for await event in stream {
                 guard let self, current == self.generation else { return }
@@ -80,7 +118,6 @@ final class CleanupSuggestionsViewModel: ObservableObject {
                     self.totalCount = total
                 case .suggestion(let suggestion):
                     self.suggestions.append(suggestion)
-                    self.selectedIDs.insert(suggestion.id)
                 }
             }
             guard let self, current == self.generation else { return }
@@ -91,6 +128,8 @@ final class CleanupSuggestionsViewModel: ObservableObject {
     func stop() {
         analysisTask?.cancel()
         analysisTask = nil
+        membershipTask?.cancel()
+        membershipTask = nil
         generation += 1
         isAnalyzing = false
     }
@@ -147,6 +186,22 @@ final class CleanupSuggestionsViewModel: ObservableObject {
             suggestions.insert(entry.suggestion, at: min(entry.index, suggestions.count))
         }
         selectedIDs.formUnion(ids)
+    }
+
+    // 사진 탐색에서 돌아왔을 때: 거기서 휴지통에 넣은 사진을 목록에서 빼고, 본 사진 기록을 갱신한다.
+    func refreshFromStore() {
+        store.reload()
+        let trashed = store.trashedIDs
+        guard suggestions.contains(where: { trashed.contains($0.id) }) else { return }
+        suggestions.removeAll { trashed.contains($0.id) }
+        selectedIDs.subtract(trashed)
+        lastTrashed = []
+        if let reasonFilter, count(for: reasonFilter) == 0 { self.reasonFilter = nil }
+    }
+
+    // 지금 보이는 목록을 사진 탐색 화면에서 한 장씩 넘겨 볼 수 있게 넘긴다.
+    var exploreFilter: PhotoFilterType {
+        .list(title: reasonFilter?.name ?? String(localized: "정리 추천"), ids: visibleSuggestions.map(\.id))
     }
 
     func clearUndo() {
