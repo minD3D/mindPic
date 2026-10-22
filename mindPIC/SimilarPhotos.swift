@@ -8,6 +8,8 @@ struct SimilarGroup: Identifiable, Sendable {
     let id: String              // 묶음의 첫 사진 ID
     let items: [PhotoItem]      // 최신순
     let bestID: String          // 남기기를 추천하는 사진
+    var bytes: Int64 = 0        // 묶음 전체 용량 (알 수 없으면 0)
+    var categories: [String: Set<PhotoCategory>] = [:]  // 사진 ID → 내용 (기기 분석)
 }
 
 // MARK: - 묶기 규칙 (Vision과 무관한 순수 로직)
@@ -81,11 +83,11 @@ enum SimilarPhotoAnalyzer {
     // 특징 벡터 거리(revision 2, 0~2)가 이 값 이하면 비슷한 사진으로 본다. 작을수록 엄격하다.
     static let distanceThreshold: Float = 0.5
 
-    /// since 이후(nil이면 전체) 사진을 최신순으로 분석해, 찾는 대로 묶음을 흘려보낸다.
-    static func analyze(since: Date?, excluding: Set<String>) -> AsyncStream<Event> {
+    /// since 이후, until 이전(nil이면 제한 없음) 사진을 최신순으로 분석해, 찾는 대로 묶음을 흘려보낸다.
+    static func analyze(since: Date?, until: Date? = nil, excluding: Set<String>) -> AsyncStream<Event> {
         AsyncStream { continuation in
             let task = Task.detached(priority: .userInitiated) {
-                await SimilarPhotoAnalyzer.run(since: since, excluding: excluding, continuation: continuation)
+                await SimilarPhotoAnalyzer.run(since: since, until: until, excluding: excluding, continuation: continuation)
                 continuation.finish()
             }
             continuation.onTermination = { _ in task.cancel() }
@@ -93,12 +95,15 @@ enum SimilarPhotoAnalyzer {
     }
 
     private static func run(
-        since: Date?, excluding: Set<String>, continuation: AsyncStream<Event>.Continuation
+        since: Date?, until: Date?, excluding: Set<String>, continuation: AsyncStream<Event>.Continuation
     ) async {
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        if let since {
-            options.predicate = NSPredicate(format: "creationDate >= %@", since as NSDate)
+        var predicates: [NSPredicate] = []
+        if let since { predicates.append(NSPredicate(format: "creationDate >= %@", since as NSDate)) }
+        if let until { predicates.append(NSPredicate(format: "creationDate < %@", until as NSDate)) }
+        if !predicates.isEmpty {
+            options.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
         }
         let result = PHAsset.fetchAssets(with: .image, options: options)
 
@@ -136,15 +141,22 @@ enum SimilarPhotoAnalyzer {
                 if Task.isCancelled { return }
                 let groupAssets = indices.map { members[$0] }
                 // 점수용 이미지는 묶음에 든 사진만 다시 받아 메모리를 아낀다.
+                let items = groupAssets.map(PhotoItem.init(asset:))
                 var images: [CGImage?] = []
-                for asset in groupAssets { images.append(await PhotoImageAnalysis.thumbnail(for: asset)) }
+                var categories: [String: Set<PhotoCategory>] = [:]
+                for item in items {
+                    let image = await PhotoImageAnalysis.thumbnail(for: item.asset)
+                    images.append(image)
+                    // 내용 필터용. 분류 결과는 저장돼 사진 탐색의 내용 필터와 함께 쓴다.
+                    if let image { categories[item.id] = await PhotoCategoryIndex.shared.categories(for: item, image: image) }
+                }
 
                 let best = SimilarPhotoGrouping.bestIndex(
                     scores: qualityScores(images),
                     favorites: groupAssets.map(\.isFavorite)
                 )
-                let items = groupAssets.map(PhotoItem.init(asset:))
-                continuation.yield(.group(SimilarGroup(id: items[0].id, items: items, bestID: items[best].id)))
+                continuation.yield(.group(SimilarGroup(id: items[0].id, items: items, bestID: items[best].id,
+                                                       bytes: PhotoSize.bytes(of: items), categories: categories)))
             }
 
             done += range.count

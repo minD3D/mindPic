@@ -3,22 +3,26 @@ import SwiftUI
 // MARK: - Clean Sand 테마
 // 따뜻한 샌드 배경 위에 흰 카드와 짙은 에스프레소 버튼만 쓰는 깔끔한 톤.
 enum AppTheme {
-    // 로고 이미지(SplashIcon/AppIcon)의 배경색과 같은 샌드색. 로고가 배경에 자연스럽게 녹아들도록 맞춘다.
-    static let background = Color(hex: 0xF2ECE0)
+    // 로고 이미지(SplashIcon)가 기기에서 실제로 보이는 배경색과 같은 샌드색. 로고 테두리가 보이지 않게 맞춘다.
+    static let background = Color(hex: 0xEFE6D8)
     static let surface = Color.white
     static let surfaceMuted = Color(hex: 0xEFE6DA)
     static let card = Color.white.opacity(0.85)
     static let cardStrong = Color.white
-    static let accent = Color(hex: 0xC69C72)        // 샌드 캐러멜
+    // 아이콘/작은 글씨용이라 accentSoft·흰 글씨 모두와 대비 3:1 이상이 되게 짙은 캐러멜을 쓴다.
+    static let accent = Color(hex: 0x94693F)        // 캐러멜
     static let accentSoft = Color(hex: 0xF3E8DA)
     static let accentDark = Color(hex: 0x2F2925)    // 에스프레소 (주요 버튼)
     static let textPrimary = Color(hex: 0x2F2925)
-    static let textSecondary = Color(hex: 0x8C7D70)
+    // 캡션에 쓰이므로 배경·surfaceMuted 위에서 4.5:1 이상 유지
+    static let textSecondary = Color(hex: 0x6F6257)
     static let border = Color(hex: 0x2F2925).opacity(0.08)
     static let shadow = Color(hex: 0x6B4E2E).opacity(0.10)
-    static let like = Color(hex: 0xB98A5E)
+    // 흰 아이콘·흰 글씨(스와이프 '좋아요' 라벨)가 4.5:1 이상 보이도록 짙게. accent보다 살짝 붉은 캐러멜.
+    static let like = Color(hex: 0xA0673A)
     static let likeSoft = Color(hex: 0xF3E8DA)
-    static let danger = Color(hex: 0xC4614E)
+    // 흰 글씨('휴지통 비우기', 스와이프 '휴지통' 라벨)가 4.5:1 이상 되도록 짙게.
+    static let danger = Color(hex: 0xB0503F)
     static let dangerSoft = Color(hex: 0xF7E3DD)
 }
 
@@ -93,7 +97,8 @@ struct AppChip: View {
 }
 
 // 앱 로고 (이미지에 "mind PIC" 글자 포함)
-// 이미지 가장자리를 부드럽게 흐려서 배경과 경계가 보이지 않게 한다.
+// 이미지 가장자리만 흐려서 배경과 경계가 보이지 않게 한다.
+// 그림·글자가 차지하는 영역(가로 약 28~75%, 세로 약 11~95%)에는 닿지 않도록 바깥 여백에서만 흐린다.
 struct AppLogo: View {
     var size: CGFloat = 200
 
@@ -103,8 +108,18 @@ struct AppLogo: View {
             .scaledToFit()
             .frame(width: size, height: size)
             .mask(
-                RadialGradient(colors: [.black, .black, .clear],
-                               center: .center, startRadius: 0, endRadius: size * 0.5)
+                LinearGradient(stops: [.init(color: .clear, location: 0),
+                                       .init(color: .black, location: 0.24),
+                                       .init(color: .black, location: 0.76),
+                                       .init(color: .clear, location: 1)],
+                               startPoint: .leading, endPoint: .trailing)
+            )
+            .mask(
+                LinearGradient(stops: [.init(color: .clear, location: 0),
+                                       .init(color: .black, location: 0.10),
+                                       .init(color: .black, location: 0.955),
+                                       .init(color: .clear, location: 1)],
+                               startPoint: .top, endPoint: .bottom)
             )
             .accessibilityLabel(Text(verbatim: "mind PIC"))
     }

@@ -15,6 +15,12 @@ struct CleanupSuggestionsView: View {
     @State private var showUndoToast = false
     @State private var undoToastToken = 0
     @State private var trashFeedback = 0
+    @State private var showFilterSheet = false
+    @State private var confirmTrash = false
+
+    // 지금 목록을 사진 탐색 화면으로 넘길 때
+    @State private var exploreFilter: ExploreDestination?
+    @State private var isExploring = false
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
 
@@ -38,19 +44,33 @@ struct CleanupSuggestionsView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if hasAuth && !vm.visibleSuggestions.isEmpty {
-                trashButton
+                VStack(spacing: 10) {
+                    exploreButton
+                    trashButton
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 8)
             }
         }
         .overlay(alignment: .bottom) {
             if showUndoToast && vm.canUndo {
                 undoToast
-                    .padding(.bottom, 90)
+                    .padding(.bottom, 156)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .navigationTitle("정리 추천")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
+        .toolbar {
+            if hasAuth {
+                ToolbarItem(placement: .topBarTrailing) { filterButton }
+            }
+        }
+        .sheet(isPresented: $showFilterSheet) {
+            CleanupFilterSheet(filter: $vm.filter)
+                .presentationDetents([.medium, .large])
+        }
         .fullScreenCover(item: $peekItem) { item in
             FullScreenPhotoView(asset: item.asset)
                 .ignoresSafeArea()
@@ -64,21 +84,38 @@ struct CleanupSuggestionsView: View {
                 checkAuthAndStart()
             }
         }
-        .onDisappear { vm.stop() }
+        .navigationDestination(item: $exploreFilter) { destination in
+            PhotoReviewView(initialFilter: destination.filter)
+        }
+        .onAppear {
+            // 사진 탐색에서 돌아온 경우
+            guard isExploring else { return }
+            isExploring = false
+            withAnimation(.easeOut(duration: 0.2)) { vm.refreshFromStore() }
+        }
+        .onDisappear {
+            // 사진 탐색으로 넘어갈 때는 분석을 계속한다.
+            if !isExploring { vm.stop() }
+        }
     }
 
     // MARK: - 본문
     private var content: some View {
         VStack(spacing: 12) {
-            Picker("기간", selection: $vm.scope) {
-                ForEach(AnalysisScope.allCases) { scope in
-                    Text(scope.title).tag(scope)
+            Picker("기간", selection: $vm.period) {
+                ForEach(CleanupPeriod.allCases) { period in
+                    Text(period.title).tag(period)
                 }
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, 20)
             .padding(.top, 8)
-            .onChange(of: vm.scope) { vm.start() }
+            .onChange(of: vm.period) { vm.start() }
+
+            if vm.period == .custom {
+                customRangeRow
+                    .padding(.horizontal, 20)
+            }
 
             if vm.isAnalyzing {
                 analysisProgress
@@ -92,12 +129,15 @@ struct CleanupSuggestionsView: View {
                     emptyState
                         .frame(maxHeight: .infinity)
                 }
+            } else if vm.filteredSuggestions.isEmpty {
+                filteredEmptyState
+                    .frame(maxHeight: .infinity)
             } else {
                 reasonChips
 
                 ScrollView {
                     HStack {
-                        Text("탭해서 남길 사진을 빼고, 길게 누르면 크게 볼 수 있어요.")
+                        Text("탭해서 지울 사진을 고르고, 길게 누르면 크게 볼 수 있어요.")
                             .font(AppFont.caption)
                             .foregroundStyle(AppTheme.textSecondary)
                         Spacer(minLength: 8)
@@ -150,7 +190,7 @@ struct CleanupSuggestionsView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 reasonChip(title: Text("전체"), systemImage: "square.grid.2x2",
-                           count: vm.suggestions.count, isSelected: vm.reasonFilter == nil) {
+                           count: vm.filteredSuggestions.count, isSelected: vm.reasonFilter == nil) {
                     vm.reasonFilter = nil
                 }
                 ForEach(vm.availableReasons) { reason in
@@ -183,6 +223,73 @@ struct CleanupSuggestionsView: View {
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
+    // 지금 보이는 목록만 사진 탐색 화면에서 한 장씩 넘겨 보기
+    private var exploreButton: some View {
+        Button {
+            isExploring = true
+            exploreFilter = ExploreDestination(filter: vm.exploreFilter)
+        } label: {
+            AppButtonLabel(
+                text: Text("\(vm.visibleSuggestions.count)장 탐색 시작하기"),
+                systemImage: "rectangle.stack",
+                foreground: AppTheme.textPrimary,
+                background: AppTheme.cardStrong,
+                border: AppTheme.border,
+                shadow: false
+            )
+        }
+        .accessibilityHint("지금 목록의 사진만 한 장씩 넘겨 보며 남기거나 지웁니다.")
+        .accessibilityIdentifier("suggestions.explore")
+    }
+
+    // '직접 선택' 기간의 시작·끝 날짜
+    private var customRangeRow: some View {
+        HStack(spacing: 8) {
+            DatePicker("시작", selection: $vm.customStart, in: ...Date(), displayedComponents: .date)
+                .labelsHidden()
+            Text(verbatim: "~")
+                .foregroundStyle(AppTheme.textSecondary)
+            DatePicker("끝", selection: $vm.customEnd, in: ...Date(), displayedComponents: .date)
+                .labelsHidden()
+            Spacer(minLength: 0)
+        }
+        .onChange(of: vm.customStart) { vm.start() }
+        .onChange(of: vm.customEnd) { vm.start() }
+    }
+
+    private var filterButton: some View {
+        let active = vm.filter.activeCount > 0 || vm.filter.sort != .newest
+        return Button {
+            showFilterSheet = true
+        } label: {
+            Image(systemName: active ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                .foregroundStyle(AppTheme.accentDark)
+        }
+        .accessibilityLabel("필터")
+        .accessibilityValue(active ? Text("켜짐") : Text("꺼짐"))
+        .accessibilityIdentifier("suggestions.filter")
+    }
+
+    // 추천 사진은 있지만 필터 조건에 맞는 사진이 없을 때
+    private var filteredEmptyState: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "line.3.horizontal.decrease")
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(AppTheme.accent)
+                .frame(width: 76, height: 76)
+                .background(AppTheme.accentSoft, in: Circle())
+            Text("조건에 맞는 사진이 없어요")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(AppTheme.textPrimary)
+            Button("필터 초기화") {
+                withAnimation(.easeOut(duration: 0.2)) { vm.filter = CleanupFilter(sort: vm.filter.sort) }
+            }
+            .font(AppFont.buttonSmall.weight(.semibold))
+            .foregroundStyle(AppTheme.accentDark)
+        }
+        .padding(.horizontal, 32)
+    }
+
     private var emptyState: some View {
         VStack(spacing: 14) {
             Image(systemName: vm.trashedCount > 0 ? "checkmark" : "sparkles")
@@ -203,9 +310,29 @@ struct CleanupSuggestionsView: View {
                 Text("정리할 만한 사진이 없어요")
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(AppTheme.textPrimary)
-                Text("다른 기간을 선택해 보세요.")
-                    .font(AppFont.subtitle)
-                    .foregroundStyle(AppTheme.textSecondary)
+                Group {
+                    if vm.analyzedCount > 0 {
+                        Text("사진 \(vm.analyzedCount)장을 확인했어요.")
+                    } else {
+                        Text("이 기간에는 사진이 없어요.")
+                    }
+                }
+                .font(AppFont.subtitle)
+                .foregroundStyle(AppTheme.textSecondary)
+                .multilineTextAlignment(.center)
+
+                // 다음 행동: 더 넓은 기간에서 다시 찾기
+                if let wider = vm.widerPeriod {
+                    Button {
+                        vm.period = wider
+                    } label: {
+                        Label("더 넓은 기간에서 찾기", systemImage: "calendar.badge.plus")
+                    }
+                    .font(AppFont.buttonSmall.weight(.semibold))
+                    .foregroundStyle(AppTheme.accentDark)
+                    .padding(.top, 4)
+                    .accessibilityIdentifier("suggestions.widerPeriod")
+                }
             }
         }
         .padding(.horizontal, 32)
@@ -217,7 +344,8 @@ struct CleanupSuggestionsView: View {
         let reason = suggestion.reasons.first
 
         return PhotoThumbnailView(asset: suggestion.item.asset)
-            .opacity(isSelected ? 1 : 0.5)
+            // 삭제 예정: 반투명 + 빨간 테두리 + 휴지통 배지 / 남김: 원본 그대로
+            .opacity(isSelected ? 0.5 : 1)
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(isSelected ? AppTheme.danger : Color.clear, lineWidth: 3)
@@ -234,11 +362,27 @@ struct CleanupSuggestionsView: View {
                         .padding(5)
                 }
             }
+            .overlay(alignment: .topLeading) {
+                // 용량순으로 볼 때는 얼마나 큰지 함께 보여준다
+                if vm.filter.sort == .largest && suggestion.bytes > 0 {
+                    Text(verbatim: PhotoSize.formatted(suggestion.bytes))
+                        .font(.caption2.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(.black.opacity(0.5), in: Capsule())
+                        .padding(5)
+                }
+            }
             .overlay(alignment: .topTrailing) {
-                Image(systemName: isSelected ? "trash.circle.fill" : "circle")
+                // 비슷한 사진과 같은 배지: 남김 = 체크, 삭제 예정 = 휴지통
+                Image(systemName: isSelected ? "trash.circle.fill" : "checkmark.circle.fill")
                     .font(.title3)
                     .symbolRenderingMode(.palette)
-                    .foregroundStyle(.white, isSelected ? AppTheme.danger : Color.black.opacity(0.25))
+                    .foregroundStyle(.white, isSelected ? AppTheme.danger : AppTheme.accentDark)
+                    // 밝은 사진에서도 남김 배지가 보이도록
+                    .shadow(color: .black.opacity(isSelected ? 0 : 0.6), radius: 2)
                     .padding(5)
             }
             .contentShape(Rectangle())
@@ -256,22 +400,35 @@ struct CleanupSuggestionsView: View {
     // MARK: - 하단 버튼 / 토스트
     private var trashButton: some View {
         let count = vm.selectedVisibleCount
+        let bytes = vm.selectedVisibleBytes
+        let text = count == 0
+            ? Text("지울 사진을 골라 주세요")
+            : bytes > 0
+                ? Text("\(count)장 휴지통으로") + Text(verbatim: " · \(PhotoSize.formatted(bytes))")
+                : Text("\(count)장 휴지통으로")
         return Button {
-            trashSelected()
+            confirmTrash = true
         } label: {
             AppButtonLabel(
-                text: Text("\(count)장 휴지통으로"),
+                text: text,
                 systemImage: "trash",
                 foreground: count > 0 ? .white : AppTheme.textSecondary,
                 background: count > 0 ? AppTheme.danger : AppTheme.cardStrong,
                 border: count > 0 ? nil : AppTheme.border,
                 shadow: count > 0
             )
-            .padding(.horizontal, 24)
-            .padding(.bottom, 8)
         }
         .disabled(count == 0)
         .accessibilityIdentifier("suggestions.trash")
+        .confirmationDialog(
+            "\(count)장을 휴지통으로 옮길까요?",
+            isPresented: $confirmTrash,
+            titleVisibility: .visible
+        ) {
+            Button("휴지통으로 옮기기", role: .destructive) { trashSelected() }
+        } message: {
+            Text("앱 휴지통을 비우기 전까지는 되돌릴 수 있어요.")
+        }
     }
 
     private var undoToast: some View {
@@ -318,4 +475,13 @@ struct CleanupSuggestionsView: View {
             if ok && !wasAuthorized { vm.start() }
         }
     }
+}
+
+// 사진 탐색 화면으로 넘길 목록 (navigationDestination용)
+private struct ExploreDestination: Hashable, Identifiable {
+    let id = UUID()
+    let filter: PhotoFilterType
+
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
