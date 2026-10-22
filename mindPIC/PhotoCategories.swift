@@ -32,10 +32,23 @@ enum PhotoCategory: String, CaseIterable, Identifiable, Sendable {
     // 모두 VNClassifyImageRequest.supportedIdentifiers()에 있는 값이어야 한다 (단위 테스트로 확인).
     var labels: Set<String> {
         switch self {
-        case .food: return []
-        case .document: return []
-        case .animal: return []
-        case .nature: return []
+        case .food:
+            return ["food", "drink", "dessert", "baked_goods", "fruit", "vegetable", "meat", "seafood",
+                    "salad", "soup", "pizza", "pasta", "sushi", "sandwich", "cake", "coffee", "cocktail"]
+        case .document:
+            // 기록용 사진 판별(iOS 17)에도 쓰인다.
+            return ["document", "receipt", "printed_page", "handwriting", "whiteboard", "chalkboard",
+                    "flipchart", "sticky_note", "newspaper", "magazine", "diagram", "chart", "ticket",
+                    "coupon", "envelope", "calendar", "passport", "checkbook"]
+        case .animal:
+            // 'mammal'은 범위가 넓어 넣지 않는다.
+            return ["animal", "dog", "cat", "canine", "feline", "kitten", "bird", "fish", "insect",
+                    "reptile", "horse", "rabbit", "rodent"]
+        case .nature:
+            // 'sky'는 도시 사진에도 붙어 넣지 않는다.
+            return ["mountain", "beach", "ocean", "lake", "river", "waterfall", "forest", "desert",
+                    "canyon", "cliff", "glacier", "hill", "shore", "sunset_sunrise", "night_sky",
+                    "aurora", "sand_dune", "volcano", "island"]
         }
     }
 
