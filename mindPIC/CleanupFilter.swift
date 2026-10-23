@@ -42,6 +42,38 @@ enum CleanupPeriod: Hashable, Identifiable {
     }
 }
 
+// MARK: - 직접 선택 빠른 기간
+// 날짜를 하나씩 고르지 않도록 연도·월·최근 N년 단위로 시작·끝 날짜를 채운다. 양 끝 날짜 포함.
+enum QuickDateRange: Hashable {
+    case recentMonths(Int)
+    case recentYears(Int)
+    case year(Int)
+    case month(year: Int, month: Int)
+
+    func range(now: Date = Date(), calendar cal: Calendar = .current) -> (start: Date, end: Date) {
+        let today = cal.startOfDay(for: now)
+        switch self {
+        case .recentMonths(let n):
+            return (cal.date(byAdding: .month, value: -n, to: today) ?? today, today)
+        case .recentYears(let n):
+            return (cal.date(byAdding: .year, value: -n, to: today) ?? today, today)
+        case .year(let y):
+            return clamped(cal.date(from: DateComponents(year: y, month: 1, day: 1)),
+                           cal.date(from: DateComponents(year: y, month: 12, day: 31)), today: today)
+        case .month(let y, let m):
+            let start = cal.date(from: DateComponents(year: y, month: m, day: 1))
+            let end = start.flatMap { cal.date(byAdding: DateComponents(month: 1, day: -1), to: $0) }
+            return clamped(start, end, today: today)
+        }
+    }
+
+    // 올해·이번 달처럼 아직 끝나지 않은 기간은 오늘까지로 자른다 (날짜 선택기가 미래를 허용하지 않음).
+    private func clamped(_ start: Date?, _ end: Date?, today: Date) -> (start: Date, end: Date) {
+        let s = min(start ?? today, today)
+        return (s, min(end ?? today, today))
+    }
+}
+
 // MARK: - 사진 종류
 enum CleanupPhotoKind: String, CaseIterable, Identifiable, Sendable {
     case selfie, burst, live

@@ -244,17 +244,9 @@ struct CleanupSuggestionsView: View {
 
     // '직접 선택' 기간의 시작·끝 날짜
     private var customRangeRow: some View {
-        HStack(spacing: 8) {
-            DatePicker("시작", selection: $vm.customStart, in: ...Date(), displayedComponents: .date)
-                .labelsHidden()
-            Text(verbatim: "~")
-                .foregroundStyle(AppTheme.textSecondary)
-            DatePicker("끝", selection: $vm.customEnd, in: ...Date(), displayedComponents: .date)
-                .labelsHidden()
-            Spacer(minLength: 0)
-        }
-        .onChange(of: vm.customStart) { vm.start() }
-        .onChange(of: vm.customEnd) { vm.start() }
+        CustomPeriodPicker(start: $vm.customStart, end: $vm.customEnd)
+            .onChange(of: vm.customStart) { vm.start() }
+            .onChange(of: vm.customEnd) { vm.start() }
     }
 
     private var filterButton: some View {
