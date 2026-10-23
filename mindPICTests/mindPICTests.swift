@@ -304,4 +304,23 @@ struct CleanupFilterTests {
         #expect(range.until == cal.date(from: DateComponents(year: 2026, month: 3, day: 13)))
         #expect(CleanupPeriod.scope(.all).dateRange(customStart: start, customEnd: end).until == nil)
     }
+
+    @Test func quickDateRangeCoversWholeYearAndMonth() {
+        let cal = Calendar.current
+        let now = cal.date(from: DateComponents(year: 2026, month: 10, day: 23, hour: 14))!
+        func day(_ y: Int, _ m: Int, _ d: Int) -> Date { cal.date(from: DateComponents(year: y, month: m, day: d))! }
+
+        let lastYear = QuickDateRange.year(2025).range(now: now)
+        #expect(lastYear.start == day(2025, 1, 1) && lastYear.end == day(2025, 12, 31))
+
+        let feb = QuickDateRange.month(year: 2024, month: 2).range(now: now)
+        #expect(feb.start == day(2024, 2, 1) && feb.end == day(2024, 2, 29))
+
+        // 아직 끝나지 않은 기간은 오늘까지
+        #expect(QuickDateRange.year(2026).range(now: now).end == day(2026, 10, 23))
+        #expect(QuickDateRange.month(year: 2026, month: 10).range(now: now).end == day(2026, 10, 23))
+
+        let recent = QuickDateRange.recentYears(3).range(now: now)
+        #expect(recent.start == day(2023, 10, 23) && recent.end == day(2026, 10, 23))
+    }
 }
