@@ -1,4 +1,5 @@
 import Foundation
+import Photos
 
 // MARK: - 리뷰 상태 저장소 (본 사진 / 휴지통)
 // UserDefaults 키는 기존 버전과 동일하게 유지해 이미 저장된 데이터가 그대로 이어진다.
@@ -47,6 +48,16 @@ final class ReviewStateStore {
 
     static func seenCount(in defaults: UserDefaults = .standard) -> Int {
         loadIDs(forKey: seenKey, from: defaults).count
+    }
+
+    // 본 사진 중 아직 사진첩에 남아 있는 수. 지운 사진의 ID도 기록에 남아 있어서
+    // seenCount()만 쓰면 화면마다 숫자가 달라지므로, 사용자에게 보여줄 때는 이 값을 쓴다.
+    static func existingSeenCount(in defaults: UserDefaults = .standard) async -> Int {
+        let seenIDs = Array(loadIDs(forKey: seenKey, from: defaults))
+        guard !seenIDs.isEmpty else { return 0 }
+        return await Task.detached(priority: .utility) {
+            PHAsset.fetchAssets(withLocalIdentifiers: seenIDs, options: nil).count
+        }.value
     }
 
     // "안 본 사진만 보기"를 처음부터 다시 쓰고 싶을 때

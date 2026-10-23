@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - 설정
 struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var seenCount = ReviewStateStore.seenCount()
+    @State private var seenCount = 0
     @State private var showResetAlert = false
 
     var body: some View {
@@ -28,6 +28,7 @@ struct SettingsSheet: View {
                 }
             }
             .appFormStyle()
+            .task { seenCount = await ReviewStateStore.existingSeenCount() }
             .navigationTitle("설정")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

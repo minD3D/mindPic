@@ -280,7 +280,6 @@ struct HomeView: View {
 
     private func refreshCounts() {
         trashCount = ReviewStateStore.trashCount()
-        seenCount = ReviewStateStore.seenCount()
         freedBytes = ReviewStateStore.freedBytes()
 
         // 전체 사진 수와, 본 사진 중 아직 사진첩에 남아 있는 수를 센다 (지운 사진까지 세면 전체보다 커질 수 있음).
@@ -290,16 +289,13 @@ struct HomeView: View {
             totalPhotos = nil
             return
         }
-        let seenIDs = Array(ReviewStateStore().seenIDs)
         Task {
-            let (seen, total) = await Task.detached(priority: .utility) {
-                let total = PHAsset.fetchAssets(with: .image, options: nil).count
-                let seen = seenIDs.isEmpty ? 0
-                    : PHAsset.fetchAssets(withLocalIdentifiers: seenIDs, options: nil).count
-                return (seen, total)
+            async let seen = ReviewStateStore.existingSeenCount()
+            async let total = Task.detached(priority: .utility) {
+                PHAsset.fetchAssets(with: .image, options: nil).count
             }.value
-            seenCount = seen
-            totalPhotos = total
+            seenCount = await seen
+            totalPhotos = await total
         }
     }
 }
